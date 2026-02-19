@@ -6,10 +6,10 @@ import './index.css'
 
 function App() {
   return (
-    <Routes>
-      <Route path='/signup' element={<SignUp />} />
-      <Route path='/signin' element={<SignIn />} />
-    </Routes>
+      <Routes>
+        <Route path='/signup' element={<SignUp />} />
+        <Route path='/signin' element={<SignIn />} />
+      </Routes>
   )
 }
 
