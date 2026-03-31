@@ -8,6 +8,7 @@ import axios from "axios";
 import { serverUrl } from "../App";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../firebase.js";
+import {ClipLoader} from "react-spinners";
 
 function SignUp() {
   const primaryColor = "#E76F51"; // Rich warm orange
@@ -16,8 +17,8 @@ function SignUp() {
   const borderColor = "#EADFD7"; // Light beige border
   const boxBorderColor = "#9CA3AF"; // Light gray for input borders
   const hoverColor = "#E89020"; // Slightly deeper peach
-  const surplusBadgeColor = "#7BC47F"; // Soft leafy green
-  const surplusBg = "#E8F6EC";
+  // const surplusBadgeColor = "#7BC47F"; // Soft leafy green
+  // const surplusBg = "#E8F6EC";
 
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("user");
@@ -26,8 +27,11 @@ function SignUp() {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
+    setLoading(true);
     try {
       const res = await axios.post(
         `${serverUrl}/api/auth/signup`,
@@ -40,19 +44,45 @@ function SignUp() {
         },
         { withCredentials: true },
       );
-
       alert("Account Created Successfully!");
       navigate("/signin");
+      setError("");
+      setLoading(false);
     } catch (error) {
       console.error(error);
-      alert("Sign Up Failed!");
+      setError(error?.response?.data?.message || "Sign Up Failed!");
+      setLoading(false);
     }
   };
 
   const handleGoogleSignUp = async () => {
+    if (!mobile || !role) {
+      setError(
+        "Please enter mobile number and select role before signing up with Google.",
+      );
+      return;
+    }
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
-    console.log(result);
+    try {
+      const { data } = await axios.post(
+        `${serverUrl}/api/auth/google-auth`,
+        {
+          fullName: result.user.displayName,
+          email: result.user.email,
+          mobile,
+          role,
+        },
+        { withCredentials: true },
+      );
+      alert("Account Created Successfully!");
+      console.log(data);
+      navigate("/signin");
+    } catch (error) {
+      console.error(error);
+      alert("Google Sign Up Failed!");
+      console.log(error.response.data);
+    }
   };
 
   return (
@@ -110,7 +140,7 @@ function SignUp() {
               "--tw-ring-color": boxBorderColor,
             }}
             onChange={(e) => setEmail(e.target.value)}
-            value={email}
+            value={email} required
           />
         </div>
 
@@ -130,7 +160,7 @@ function SignUp() {
               "--tw-ring-color": boxBorderColor,
             }}
             onChange={(e) => setMobile(e.target.value)}
-            value={mobile}
+            value={mobile} required
           />
         </div>
 
@@ -151,7 +181,7 @@ function SignUp() {
                 "--tw-ring-color": boxBorderColor,
               }}
               onChange={(e) => setPassword(e.target.value)}
-              value={password}
+              value={password} required
             />
           </div>
           <button
@@ -189,10 +219,11 @@ function SignUp() {
         <button
           className={`w-full max-w-md mt-2 px-4 py-3 rounded-xl text-white font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#E64323]`}
           style={{ backgroundColor: primaryColor }}
-          onClick={handleSignUp}
+          onClick={handleSignUp} disabled={loading}
         >
-          Sign Up
+          {loading ? <ClipLoader size={20} /> : "Sign Up"}
         </button>
+
         <button
           className={`w-full max-w-md mt-2 px-4 py-2 flex items-center justify-center gap-2 rounded-lg border border-gray-400 font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-gray-200`}
           onClick={handleGoogleSignUp}
@@ -200,6 +231,9 @@ function SignUp() {
           <FcGoogle size={20} />
           <span>Sign Up with Google</span>
         </button>
+
+        <p className="text-red-600 font-semibold  text-center my-2">{error}</p>
+
         <p
           className="flex items-center justify-center mt-2"
           onClick={() => navigate("/signin")}

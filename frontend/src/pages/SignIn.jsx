@@ -6,6 +6,9 @@ import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { serverUrl } from "../App";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../../firebase.js";
+import {ClipLoader} from "react-spinners";
 
 function SignIn() {
   const primaryColor = "#E76F51"; // Rich warm orange
@@ -18,23 +21,52 @@ function SignIn() {
   const surplusBg = "#E8F6EC";
 
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")  
-
-  const handleSignIn = async() => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  const handleSignIn = async () => {
+    setLoading(true);
     try {
-      const res = await axios.post(`${serverUrl}/api/auth/signin`, {
-        email,
-        password
-      },{withCredentials:true});
-
-      alert("Signed In Successfully!")
-      navigate("/")
-      
+      const res = await axios.post(
+        `${serverUrl}/api/auth/signin`,
+        {
+          email,
+          password,
+        },
+        { withCredentials: true },
+      );
+      alert("Signed In Successfully!");
+      navigate("/");
+      setError("");
+      setLoading(false);
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Sign In Failed!")
+      setError(error?.response?.data?.message || "Sign In Failed!");
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    try {
+      const { data } = await axios.post(
+        `${serverUrl}/api/auth/google-auth`,
+        {
+          email: result.user.email,
+        },
+        { withCredentials: true },
+      );
+      alert("Google Sign In Successfully!");
+      console.log(data);
+      navigate("/");
+    } catch (error) {
+      console.error(error);
+      alert("Google Sign In Failed!");
+      console.log(error.response.data);
     }
   };
 
@@ -68,8 +100,13 @@ function SignIn() {
             type="email"
             placeholder="Enter your email address"
             className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:border-gray-700 transition-all duration-200 ease-in-out"
-            style={{ border: `1px solid ${borderColor}`, '--tw-ring-color': boxBorderColor }}
-            onChange={(e)=>setEmail(e.target.value)} value={email}/>
+            style={{
+              border: `1px solid ${borderColor}`,
+              "--tw-ring-color": boxBorderColor,
+            }}
+            onChange={(e) => setEmail(e.target.value)}
+            value={email} required
+          />
         </div>
         <div className="mb-3">
           <label
@@ -83,8 +120,12 @@ function SignIn() {
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:border-gray-700 transition-all duration-200 ease-in-out"
-            style={{ border: `1px solid ${borderColor}`, '--tw-ring-color': boxBorderColor }}
-            onChange={(e)=>setPassword(e.target.value)} value={password}
+              style={{
+                border: `1px solid ${borderColor}`,
+                "--tw-ring-color": boxBorderColor,
+              }}
+              onChange={(e) => setPassword(e.target.value)}
+              value={password} required
             />
           </div>
           <button
@@ -95,24 +136,43 @@ function SignIn() {
             {!showPassword ? <FaEye /> : <FaEyeSlash />}
           </button>
         </div>
-        <div className="text-right mb-2 text-[#E76F51] font-medium cursor-pointer" onClick={()=>navigate("/forgot-password")}>
+        <div
+          className="text-right mb-2 text-[#E76F51] font-medium cursor-pointer"
+          onClick={() => navigate("/forgot-password")}
+        >
           Forgot Password?
         </div>
 
-      <button
-        className={`w-full max-w-md mt-2 px-4 py-3 rounded-xl text-white font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#E64323]`}
-        style={{ backgroundColor: primaryColor }} onClick={handleSignIn}>
-        Sign In
-      </button>
+        <button
+          className={`w-full max-w-md mt-2 px-4 py-3 rounded-xl text-white font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#E64323]`}
+          style={{ backgroundColor: primaryColor }}
+          onClick={handleSignIn} disabled={loading}
+        >
+          {loading ? <ClipLoader size={20} color="#fff" /> : "Sign In"}
+        </button>
 
-      <button
-        className={`w-full max-w-md mt-2 px-4 py-2 flex items-center justify-center gap-2 rounded-lg border border-gray-400 font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-gray-200`}>
+        <button
+          className={`w-full max-w-md mt-2 px-4 py-2 flex items-center justify-center gap-2 rounded-lg border border-gray-400 font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-gray-200`}
+          onClick={handleGoogleSignIn}
+        >
           <FcGoogle size={20} />
           <span>Sign In with Google</span>
-      </button>
-      
-      <p className="flex items-center justify-center mt-2" onClick={()=>navigate("/signup")}>
-        Don't have an account? <span className="px-1 cursor-pointer text-primaryColor font-semibold hover:underline" style={{ color: primaryColor }}>Sign Up</span></p>
+        </button>
+
+        <p className="text-red-600 font-semibold  text-center my-2">{error}</p>
+
+        <p
+          className="flex items-center justify-center mt-2"
+          onClick={() => navigate("/signup")}
+        >
+          Don't have an account?{" "}
+          <span
+            className="px-1 cursor-pointer text-primaryColor font-semibold hover:underline"
+            style={{ color: primaryColor }}
+          >
+            Sign Up
+          </span>
+        </p>
       </div>
     </div>
   );

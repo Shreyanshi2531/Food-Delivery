@@ -4,6 +4,7 @@ import { MdOutlineKeyboardBackspace } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { serverUrl } from "../App";
+import {ClipLoader} from "react-spinners";
 
 function ForgotPassword() {
   const primaryColor = "#E76F51"; // Rich warm orange
@@ -18,24 +19,36 @@ function ForgotPassword() {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSendOTP = async () => {
+    setLoading(true);
     try {
       const result = await axios.post(`${serverUrl}/api/auth/send-otp`, { email }, {withCredentials:true});
       console.log(result.data);
+      setError("");
       setStep(2);
+      setLoading(false);
     } catch (error) {
       console.error("Error sending OTP:", error);
+      setError(error?.response?.data?.message || "Failed to send OTP!");
+      setLoading(false);
     }
   };
 
   const handleVerifyOTP = async () => {
+    setLoading(true);
     try {
       const result = await axios.post(`${serverUrl}/api/auth/verify-otp`, { email, otp }, {withCredentials:true});
       console.log(result.data);
+      setError("");
       setStep(3);
+      setLoading(false);
     } catch (error) {
       console.error("Error verifying OTP:", error);
+      setError(error?.response?.data?.message || "Failed to verify OTP!");
+      setLoading(false);
     }
   };
 
@@ -44,13 +57,18 @@ function ForgotPassword() {
       alert("Passwords do not match!");
       return;
     }
+    setLoading(true);
     try {
       const result = await axios.post(`${serverUrl}/api/auth/reset-password`, { email, newPassword }, {withCredentials:true});
       console.log(result.data);
       alert("Password reset successful! Please sign in with your new password.");
       navigate("/signin")
+      setError("");
+      setLoading(false);
     } catch (error) {
       console.error("Error resetting password:", error);
+      setError(error?.response?.data?.message || "Failed to reset password!");
+      setLoading(false);
     }
   };
 
@@ -91,16 +109,17 @@ function ForgotPassword() {
                   "--tw-ring-color": boxBorderColor,
                 }}
                 onChange={(e) => setEmail(e.target.value)}
-                value={email}
+                value={email} required
               />
             </div>
             <button
               className={`w-full max-w-md mt-2 px-4 py-3 rounded-xl text-white font-medium cursor-pointer transicdtion-all duration-200 ease-in-out hover:bg-[#E64323] hover:scale-101`}
               style={{ backgroundColor: primaryColor }}
-              onClick={handleSendOTP}
+              onClick={handleSendOTP} disabled={loading}
             >
-              Send OTP
+              {loading ? <ClipLoader size={20} color="#fff" /> : "Send OTP"}
             </button>
+            <p className="text-red-600 font-semibold  text-center my-2">{error}</p>
           </div>
         )}
 
@@ -125,16 +144,17 @@ function ForgotPassword() {
                   "--tw-ring-color": boxBorderColor,
                 }}
                 onChange={(e) => setOtp(e.target.value)}
-                value={otp}
+                value={otp} required
               />
             </div>
             <button
               className={`w-full max-w-md mt-2 px-4 py-3 rounded-xl text-white font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#E64323] hover:scale-101`}
               style={{ backgroundColor: primaryColor }}
-              onClick={handleVerifyOTP}
+              onClick={handleVerifyOTP} disabled={loading}
             >
-              Verify OTP
+              {loading ? <ClipLoader size={20} color="#fff" /> : "Verify OTP"}
             </button>
+            <p className="text-red-600 font-semibold  text-center my-2">{error}</p>
           </div>
         )}
 
@@ -159,7 +179,7 @@ function ForgotPassword() {
                   "--tw-ring-color": boxBorderColor,
                 }}
                 onChange={(e) => setNewPassword(e.target.value)}
-                value={newPassword}
+                value={newPassword} required
               />
             </div>
 
@@ -179,17 +199,18 @@ function ForgotPassword() {
                   "--tw-ring-color": boxBorderColor,
                 }}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                value={confirmPassword}
+                value={confirmPassword} required
               />
             </div>
 
             <button
               className={`w-full max-w-md mt-2 px-4 py-3 rounded-xl text-white font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#E64323] hover:scale-101`}
               style={{ backgroundColor: primaryColor }}
-              onClick={handleResetPassword}
+              onClick={handleResetPassword} disabled={loading}
             >
-              Reset Password
+              {loading ? <ClipLoader size={20} color="#fff" /> : "Reset Password"}
             </button>
+            <p className="text-red-600 font-semibold  text-center my-2">{error}</p>
           </div>
         )}
 
