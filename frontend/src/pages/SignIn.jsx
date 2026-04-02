@@ -26,7 +26,8 @@ function SignIn() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
+  const dispatch = useDispatch();
+
   const handleSignIn = async () => {
     setLoading(true);
     try {
@@ -39,6 +40,7 @@ function SignIn() {
         { withCredentials: true },
       );
       alert("Signed In Successfully!");
+      dispatch(setUserData(res.data));
       navigate("/");
       setError("");
       setLoading(false);
@@ -61,7 +63,7 @@ function SignIn() {
         { withCredentials: true },
       );
       alert("Google Sign In Successfully!");
-      console.log(data);
+      dispatch(setUserData(data));
       navigate("/");
     } catch (error) {
       console.error(error);

@@ -29,6 +29,7 @@ function SignUp() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
 
   const handleSignUp = async () => {
     setLoading(true);
@@ -45,6 +46,7 @@ function SignUp() {
         { withCredentials: true },
       );
       alert("Account Created Successfully!");
+      dispatch(setUserData(res.data));
       navigate("/signin");
       setError("");
       setLoading(false);
@@ -76,7 +78,7 @@ function SignUp() {
         { withCredentials: true },
       );
       alert("Account Created Successfully!");
-      console.log(data);
+      dispatch(setUserData(data));
       navigate("/signin");
     } catch (error) {
       console.error(error);
