@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { use } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import SignUp from './pages/SignUp'
 import SignIn from './pages/SignIn'
@@ -8,12 +8,16 @@ import './index.css'
 import { useSelector } from 'react-redux'
 import Home from './pages/Home'
 import Navbar from './components/Navbar'
+import useGetCity from "./hooks/useGetCity";
 
 export const serverUrl="http://localhost:8000"
 
 function App() {
   useGetCurrentUser();
+  useGetCity();
+
   const {userData} = useSelector((state) => state.user);
+
   return (
       <Routes>
         <Route path='/signup' element={!userData ? <SignUp /> : <Navigate to={"/"} />} />
