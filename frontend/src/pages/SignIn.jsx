@@ -8,7 +8,7 @@ import axios from "axios";
 import { serverUrl } from "../App";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../firebase.js";
-import {ClipLoader} from "react-spinners";
+import { ClipLoader } from "react-spinners";
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/user.slice";
 
@@ -31,27 +31,21 @@ function SignIn() {
   const dispatch = useDispatch();
 
   const handleSignIn = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        `${serverUrl}/api/auth/signin`,
-        {
-          email,
-          password,
-        },
-        { withCredentials: true },
-      );
-      alert("Signed In Successfully!");
-      dispatch(setUserData(res.data));
-      navigate("/");
-      setError("");
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-      setError(error?.response?.data?.message || "Sign In Failed!");
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const res = await axios.post(
+      `${serverUrl}/api/auth/signin`,
+      { email, password },
+      { withCredentials: true }
+    );
+    dispatch(setUserData(res.data));
+    alert("Logged in successfully!");
+  } catch (error) {
+    setError(error?.response?.data?.message || "Login failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
@@ -66,7 +60,14 @@ function SignIn() {
       );
       alert("Google Sign In Successfully!");
       dispatch(setUserData(data));
-      navigate("/");
+
+      if (data.role === "owner") {
+        navigate("/owner/dashboard");
+      } else if (data.role === "deliveryBoy") {
+        navigate("/delivery/dashboard");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       console.error(error);
       alert("Google Sign In Failed!");
@@ -109,7 +110,8 @@ function SignIn() {
               "--tw-ring-color": boxBorderColor,
             }}
             onChange={(e) => setEmail(e.target.value)}
-            value={email} required
+            value={email}
+            required
           />
         </div>
         <div className="mb-3">
@@ -129,7 +131,8 @@ function SignIn() {
                 "--tw-ring-color": boxBorderColor,
               }}
               onChange={(e) => setPassword(e.target.value)}
-              value={password} required
+              value={password}
+              required
             />
           </div>
           <button
@@ -150,7 +153,8 @@ function SignIn() {
         <button
           className={`w-full max-w-md mt-2 px-4 py-3 rounded-xl text-white font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#E64323]`}
           style={{ backgroundColor: primaryColor }}
-          onClick={handleSignIn} disabled={loading}
+          onClick={handleSignIn}
+          disabled={loading}
         >
           {loading ? <ClipLoader size={20} color="#fff" /> : "Sign In"}
         </button>

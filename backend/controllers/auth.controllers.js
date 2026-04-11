@@ -22,12 +22,20 @@ export const signUp = async (req, res) => {
         }
 
         const hashPass = await bcrypt.hash(password, 10);
+
+        const safeRole =
+            role === "owner"
+                ? "owner"
+                : role === "deliveryBoy"
+                ? "deliveryBoy"
+                : "user";
+
         user = await User.create({
             fullName,
             email,
             mobile,
             password: hashPass,
-            role,
+            role: safeRole,
         });
 
         const token = await genToken(user._id);
@@ -52,7 +60,7 @@ export const signIn = async (req, res) => {
             return res.status(400).json({ message: "User does not exist." });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             return res.status(400).json({ message: "Incorrect Password." });
@@ -135,15 +143,23 @@ export const resetPassword = async (req, res) => {
 
 export const googleAuth = async (req, res) => {
     try {
-        const { email, fullName, mobile } = req.body;
+        const { email, fullName, mobile, role } = req.body;
+        const safeRole =
+            role === "owner"
+                ? "owner"
+                : role === "deliveryBoy"
+                ? "deliveryBoy"
+                : "user";
+
         let user = await User.findOne({ email });
+
         if (!user) {
             user = await User.create({
                 fullName,
                 email,
                 mobile,
-                role
-            })
+                role: safeRole,
+            });
         }
 
         const token = await genToken(user._id);

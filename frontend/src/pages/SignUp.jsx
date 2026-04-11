@@ -8,17 +8,17 @@ import axios from "axios";
 import { serverUrl } from "../App";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../firebase.js";
-import {ClipLoader} from "react-spinners";
+import { ClipLoader } from "react-spinners";
+import { useDispatch } from "react-redux";
+import { setUserData } from "../redux/user.slice.js";
 
 function SignUp() {
-  const primaryColor = "#E76F51"; // Rich warm orange
-  const secondaryColor = "#A8D5BA"; // Pastel mint green
-  const backgroundColor = "#FFF8F2"; // Warm creamy background
-  const borderColor = "#EADFD7"; // Light beige border
-  const boxBorderColor = "#9CA3AF"; // Light gray for input borders
-  const hoverColor = "#E89020"; // Slightly deeper peach
-  // const surplusBadgeColor = "#7BC47F"; // Soft leafy green
-  // const surplusBg = "#E8F6EC";
+  const primaryColor = "#E76F51";
+  const secondaryColor = "#A8D5BA";
+  const backgroundColor = "#FFF8F2";
+  const borderColor = "#EADFD7";
+  const boxBorderColor = "#9CA3AF";
+  const hoverColor = "#E89020";
 
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("user");
@@ -32,30 +32,21 @@ function SignUp() {
   const dispatch = useDispatch();
 
   const handleSignUp = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        `${serverUrl}/api/auth/signup`,
-        {
-          fullName,
-          email,
-          mobile,
-          password,
-          role,
-        },
-        { withCredentials: true },
-      );
-      alert("Account Created Successfully!");
-      dispatch(setUserData(res.data));
-      navigate("/signin");
-      setError("");
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-      setError(error?.response?.data?.message || "Sign Up Failed!");
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const res = await axios.post(
+      `${serverUrl}/api/auth/signup`,
+      { fullName, email, mobile, password, role },
+      { withCredentials: true }
+    );  
+    alert("Account Created Successfully!");
+    dispatch(setUserData(res.data)); 
+  } catch (error) {
+    setError(error?.response?.data?.message || "Sign Up Failed!");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleGoogleSignUp = async () => {
     if (!mobile || !role) {
@@ -79,7 +70,14 @@ function SignUp() {
       );
       alert("Account Created Successfully!");
       dispatch(setUserData(data));
-      navigate("/signin");
+
+      if (data.role === "owner") {
+        navigate("/owner/dashboard");
+      } else if (data.role === "deliveryBoy") {
+        navigate("/delivery/dashboard");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       console.error(error);
       alert("Google Sign Up Failed!");
@@ -107,10 +105,7 @@ function SignUp() {
         </p>
 
         <div className="mb-4">
-          <label
-            htmlFor="fullName"
-            className="block text-sm text-gray-600 font-medium mb-2"
-          >
+          <label className="block text-sm text-gray-600 font-medium mb-2">
             Full Name
           </label>
           <input
@@ -127,10 +122,7 @@ function SignUp() {
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="email"
-            className="block text-sm text-gray-600 font-medium mb-2"
-          >
+          <label className="block text-sm text-gray-600 font-medium mb-2">
             Email Address
           </label>
           <input
@@ -142,15 +134,13 @@ function SignUp() {
               "--tw-ring-color": boxBorderColor,
             }}
             onChange={(e) => setEmail(e.target.value)}
-            value={email} required
+            value={email}
+            required
           />
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="mobile"
-            className="block text-sm text-gray-600 font-medium mb-2"
-          >
+          <label className="block text-sm text-gray-600 font-medium mb-2">
             Mobile Number
           </label>
           <input
@@ -162,15 +152,13 @@ function SignUp() {
               "--tw-ring-color": boxBorderColor,
             }}
             onChange={(e) => setMobile(e.target.value)}
-            value={mobile} required
+            value={mobile}
+            required
           />
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="password"
-            className="block text-sm text-gray-600 font-medium mb-2"
-          >
+          <label className="block text-sm text-gray-600 font-medium mb-2">
             Password
           </label>
           <div className="relative">
@@ -183,7 +171,8 @@ function SignUp() {
                 "--tw-ring-color": boxBorderColor,
               }}
               onChange={(e) => setPassword(e.target.value)}
-              value={password} required
+              value={password}
+              required
             />
           </div>
           <button
@@ -196,19 +185,17 @@ function SignUp() {
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="role"
-            className="block text-sm text-gray-600 font-medium mb-2"
-          >
+          <label className="block text-sm text-gray-600 font-medium mb-2">
             Role
           </label>
           <div className="flex gap-2">
             {["user", "owner", "deliveryBoy"].map((r) => (
               <button
+                key={r}
                 className="cursor-pointer flex-1 text-center font-medium w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 ease-in-out"
                 onClick={() => setRole(r)}
                 style={
-                  role == r
+                  role === r
                     ? { backgroundColor: primaryColor, color: "white" }
                     : { border: `1px solid ${boxBorderColor}` }
                 }
@@ -218,23 +205,25 @@ function SignUp() {
             ))}
           </div>
         </div>
+
         <button
-          className={`w-full max-w-md mt-2 px-4 py-3 rounded-xl text-white font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#E64323]`}
+          className="w-full mt-2 px-4 py-3 rounded-xl text-white font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#E64323]"
           style={{ backgroundColor: primaryColor }}
-          onClick={handleSignUp} disabled={loading}
+          onClick={handleSignUp}
+          disabled={loading}
         >
           {loading ? <ClipLoader size={20} /> : "Sign Up"}
         </button>
 
         <button
-          className={`w-full max-w-md mt-2 px-4 py-2 flex items-center justify-center gap-2 rounded-lg border border-gray-400 font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-gray-200`}
+          className="w-full mt-2 px-4 py-2 flex items-center justify-center gap-2 rounded-lg border border-gray-400 font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-gray-200"
           onClick={handleGoogleSignUp}
         >
           <FcGoogle size={20} />
           <span>Sign Up with Google</span>
         </button>
 
-        <p className="text-red-600 font-semibold  text-center my-2">{error}</p>
+        <p className="text-red-600 font-semibold text-center my-2">{error}</p>
 
         <p
           className="flex items-center justify-center mt-2"
@@ -242,7 +231,7 @@ function SignUp() {
         >
           Already have an account?{" "}
           <span
-            className="px-1 cursor-pointer text-primaryColor font-semibold hover:underline"
+            className="px-1 cursor-pointer font-semibold hover:underline"
             style={{ color: primaryColor }}
           >
             Sign In
