@@ -1,5 +1,5 @@
 import express from "express";
-import isAuth from "../middleware/auth.middleware.js";
+import isAuth from "../middlewares/isAuth.js";
 import { addItem, editItem } from "../controllers/item.controllers.js";
 import { upload } from "../middlewares/multar.js";  
 

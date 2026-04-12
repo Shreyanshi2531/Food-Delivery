@@ -9,8 +9,11 @@ import { useSelector } from 'react-redux'
 import Home from './pages/Home'
 import Navbar from './components/Navbar'
 import useGetCity from "./hooks/useGetCity";
+import useGetShop from './hooks/useGetShop.jsx'
 import { ClipLoader } from "react-spinners";
 import OwnerDashboard from './components/OwnerDashboard.jsx'
+import CreateEditShop from './pages/CreateEditShop.jsx'
+import { useNavigate } from 'react-router-dom'
 
 export const serverUrl="http://localhost:8000"
 
@@ -18,6 +21,7 @@ function App() {
   const { userData, loading } = useSelector((state) => state.user); // Add a loading state from redux
   useGetCurrentUser(); 
   useGetCity();
+  useGetShop();
   
   // If we are still checking if the user is logged in, show a loader
   if (loading) {
@@ -69,6 +73,14 @@ function App() {
       )
     }
   />
+ <Route
+  path="/create-edit-shop"
+  element={
+    userData?.role === "owner"
+      ? <CreateEditShop />
+      : <Navigate to="/signin" />
+  }
+/>
 </Routes>
   );
 }

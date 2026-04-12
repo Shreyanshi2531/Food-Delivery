@@ -1,5 +1,5 @@
 import uploadOnCloudinary from "../utils/cloudinary.js";
-import Shop from "../models/Shop.js";
+import Shop from "../models/shop.model.js";
 
 export const createEditShop = async (req, res) => {
   try {
@@ -39,6 +39,19 @@ export const createEditShop = async (req, res) => {
     res.status(201).json(shop);
   } catch (error) {
     console.error("Error creating shop:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getShopByOwner = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ owner: req.userId }).populate("owner items");
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+    return res.status(200).json(shop);
+  } catch (error) {
+    console.error("Error fetching shop:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
