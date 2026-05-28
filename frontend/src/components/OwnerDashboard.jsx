@@ -1,12 +1,47 @@
-import React from 'react'
-import Navbar from './Navbar.jsx'
-import { useSelector } from 'react-redux'
+import React, { useRef } from "react";
+import Navbar from "./Navbar.jsx";
+import { useSelector, useDispatch } from "react-redux";
 import { FaUtensils } from "react-icons/fa6";
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { serverUrl } from "../App";
+import { setMyShopData } from "../redux/owner.slice.js";
+import { FaPen } from "react-icons/fa";
+import OwnerItemCard from "./OwnerItemCard.jsx";
 
 function OwnerDashboard() {
   const { myShopData } = useSelector((state) => state.owner);
+
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const fileInputRef = useRef(null);
+
+  const handleCoverImageChange = async (e) => {
+    try {
+      const file = e.target.files[0];
+
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const result = await axios.put(
+        `${serverUrl}/api/shop/update-cover-image`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        },
+      );
+
+      dispatch(setMyShopData(result.data));
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div>
@@ -14,16 +49,15 @@ function OwnerDashboard() {
 
       {!myShopData && (
         <div className="flex justify-center items-center min-h-[80vh] px-4">
-          
-          <div className="w-full max-w-md 
-          bg-white/80 backdrop-blur-md 
-          shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
-          rounded-3xl p-8 border border-gray-100
-          hover:shadow-[0_15px_50px_rgba(0,0,0,0.12)]
-          transition-all duration-300">
-
+          <div
+            className="w-full max-w-md 
+            bg-white/80 backdrop-blur-md 
+            shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
+            rounded-3xl p-8 border border-gray-100
+            hover:shadow-[0_15px_50px_rgba(0,0,0,0.12)]
+            transition-all duration-300"
+          >
             <div className="flex flex-col items-center text-center">
-
               {/* ICON */}
               <div className="bg-[#e76f51]/10 p-4 rounded-full mb-4">
                 <FaUtensils className="text-[#E76F51] w-10 h-10" />
@@ -36,25 +70,176 @@ function OwnerDashboard() {
 
               {/* SUBTEXT */}
               <p className="text-gray-500 mb-6 text-sm sm:text-base leading-relaxed">
-                Join our platform and reach thousands of hungry customers every day.
+                Join our platform and reach thousands of hungry customers every
+                day.
               </p>
 
               {/* BUTTON */}
-              <button className="px-6 py-2.5 bg-[#e76f51] text-white rounded-xl 
-              shadow-md hover:shadow-lg 
-              hover:scale-105 active:scale-95 
-              transition-all duration-200 font-medium"
-              onClick={()=>navigate("/create-edit-shop")}>
+              <button
+                className="px-6 py-2.5 bg-[#e76f51] text-white rounded-xl 
+                shadow-md hover:shadow-lg 
+                hover:scale-105 active:scale-95 
+                transition-all duration-200 font-medium"
+                onClick={() => navigate("/create-edit-shop")}
+              >
                 Get Started
               </button>
-
             </div>
           </div>
-
         </div>
       )}
+
+      {myShopData && (
+  <div className="flex flex-col items-center min-h-[80vh] pt-20 px-4 py-10 gap-10">
+
+    {/* SHOP CARD */}
+    <div
+      className="w-full max-w-4xl bg-white/80 backdrop-blur-md 
+      shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
+      rounded-3xl p-6 sm:p-8 border border-gray-100"
+    >
+
+      {/* HEADER */}
+      <div className="flex items-center gap-3 mb-6">
+
+        <div className="bg-[#e76f51]/10 p-3 rounded-full">
+          <FaUtensils className="text-[#E76F51] w-6 h-6" />
+        </div>
+
+        <div>
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
+            Welcome to {myShopData.name}
+          </h2>
+
+          <p className="text-sm text-gray-500 mt-1">
+            Manage your restaurant profile and orders
+          </p>
+        </div>
+
+      </div>
+
+      {/* IMAGE CARD */}
+      <div
+        className="relative w-full h-[220px] sm:h-[320px] rounded-2xl 
+        overflow-hidden shadow-lg group"
+      >
+
+        {/* IMAGE */}
+        <img
+          src={myShopData.image}
+          alt={myShopData.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+        />
+
+        {/* EDIT SHOP BUTTON */}
+        <button
+          onClick={() => navigate("/create-edit-shop")}
+          className="absolute top-4 right-4 z-20 
+          bg-white/80 p-3 rounded-full
+          hover:scale-110 transition-all duration-200"
+        >
+          <FaPen className="text-[#E76F51] w-4 h-4" />
+        </button>
+
+        {/* OVERLAY */}
+        <div
+          className="absolute inset-0 bg-gradient-to-t 
+          from-black/60 via-black/20 to-transparent"
+        />
+
+        {/* TEXT */}
+        <div className="absolute bottom-5 left-5 text-white">
+
+          <h3 className="text-2xl font-semibold">
+            {myShopData.name}
+          </h3>
+
+          <p className="text-sm text-gray-200">
+            {myShopData.city}, {myShopData.state}
+          </p>
+
+        </div>
+
+        {/* HIDDEN INPUT */}
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleCoverImageChange}
+        />
+
+        {/* BUTTON */}
+        <div
+          className="absolute inset-0 flex items-center justify-center 
+          opacity-0 group-hover:opacity-100 transition-all duration-300"
+        >
+          <button
+            onClick={() => fileInputRef.current.click()}
+            className="px-5 py-2.5 bg-[#e76f51] text-white rounded-xl 
+            shadow-lg hover:scale-105 active:scale-95 
+            transition-all duration-200 font-medium"
+          >
+            Edit Cover Image
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    {/* NO ITEMS CARD */}
+    {myShopData.items.length === 0 && (
+      <div
+        className="w-full max-w-2xl 
+        bg-white/80 backdrop-blur-md 
+        shadow-[0_10px_35px_rgba(0,0,0,0.06)] 
+        rounded-3xl p-6 sm:p-8 border border-gray-100
+        flex flex-col items-center justify-center text-center"
+      >
+
+        {/* ICON */}
+        <div className="bg-[#e76f51]/10 p-3 rounded-full mb-4">
+          <FaUtensils className="text-[#E76F51] w-7 h-7" />
+        </div>
+
+        {/* TITLE */}
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">
+          No Items Added Yet
+        </h2>
+
+        {/* SUBTEXT */}
+        <p className="text-gray-500 text-sm sm:text-base max-w-md mb-5 leading-relaxed">
+          Your menu is empty right now. Add your first food item and start serving customers.
+        </p>
+
+        {/* BUTTON */}
+        <button
+          className="px-5 py-2.5 bg-[#e76f51] text-white rounded-xl 
+          shadow-md hover:shadow-lg 
+          hover:scale-105 active:scale-95 
+          transition-all duration-200 font-medium"
+          onClick={() => navigate("/add-item")}
+        >
+          Add Your First Item
+        </button>
+
+      </div>
+    )}
+
+    {/* ITEMS GRID */}
+    {myShopData.items.length > 0 && (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        {myShopData.items.map((item) => (
+          <OwnerItemCard key={item._id} item={item} />
+        ))}
+      </div>
+    )}
+
+  </div>
+)}
     </div>
   );
 }
 
-export default OwnerDashboard
+export default OwnerDashboard;

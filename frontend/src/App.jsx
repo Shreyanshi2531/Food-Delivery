@@ -1,29 +1,38 @@
-import React from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import SignUp from './pages/SignUp'
-import SignIn from './pages/SignIn'
-import ForgotPassword from './pages/ForgotPassword'
-import useGetCurrentUser from './hooks/useGetCurrentUser'
-import './index.css'
-import { useSelector } from 'react-redux'
-import Home from './pages/Home'
-import Navbar from './components/Navbar'
-import useGetCity from "./hooks/useGetCity";
-import useGetShop from './hooks/useGetShop.jsx'
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { ClipLoader } from "react-spinners";
-import OwnerDashboard from './components/OwnerDashboard.jsx'
-import CreateEditShop from './pages/CreateEditShop.jsx'
-import { useNavigate } from 'react-router-dom'
 
-export const serverUrl="http://localhost:8000"
+import "./index.css";
+
+// PAGES
+import SignUp from "./pages/SignUp.jsx";
+import SignIn from "./pages/SignIn.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import Home from "./pages/Home.jsx";
+import CreateEditShop from "./pages/CreateEditShop.jsx";
+import AddItem from "./pages/AddItem.jsx";
+import EditItem from "./pages/EditItem.jsx";
+
+// COMPONENTS
+import Navbar from "./components/Navbar.jsx";
+import OwnerDashboard from "./components/OwnerDashboard.jsx";
+
+// HOOKS
+import useGetCurrentUser from "./hooks/useGetCurrentUser.jsx";
+import useGetCity from "./hooks/useGetCity.jsx";
+import useGetShop from "./hooks/useGetShop.jsx";
+
+export const serverUrl = "http://localhost:8000";
 
 function App() {
-  const { userData, loading } = useSelector((state) => state.user); // Add a loading state from redux
-  useGetCurrentUser(); 
+  const { userData, loading } = useSelector((state) => state.user);
+
+  useGetCurrentUser();
   useGetCity();
   useGetShop();
-  
-  // If we are still checking if the user is logged in, show a loader
+
+  // LOADER
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -34,62 +43,130 @@ function App() {
 
   return (
     <Routes>
-  <Route
-    path='/signup'
-    element={!userData ? <SignUp /> : <Navigate to={getRedirectPath(userData.role)} />}
-  />
-  <Route
-    path='/signin'
-    element={!userData ? <SignIn /> : <Navigate to={getRedirectPath(userData.role)} />}
-  />
 
-  {/* OWNER */}
-  <Route
-    path='/owner/dashboard'
-    element={userData?.role === "owner" ? <OwnerDashboard /> : <Navigate to="/signin" />}
-  />
+      {/* FORGOT PASSWORD */}
+      <Route
+        path="/forgot-password"
+        element={
+          !userData ? (
+            <ForgotPassword />
+          ) : (
+            <Navigate to={getRedirectPath(userData.role)} />
+          )
+        }
+      />
 
-  {/* DELIVERY */}
-  <Route
-    path='/delivery/dashboard'
-    element={userData?.role === "deliveryBoy" ? <div>Delivery Dashboard</div> : <Navigate to="/signin" />}
-  />
+      {/* SIGNUP */}
+      <Route
+        path="/signup"
+        element={
+          !userData ? (
+            <SignUp />
+          ) : (
+            <Navigate to={getRedirectPath(userData.role)} />
+          )
+        }
+      />
 
-  {/* USER / HOME */}
-  <Route
-    path='/'
-    element={
-      !userData ? (
-        <Navigate to="/signin" />
-      ) : userData.role === "user" ? (
-        <>
-          <Navbar />
-          <Home />
-        </>
-      ) : (
-        // This is the fix: If they are logged in but NOT a user, 
-        // send them to THEIR correct dashboard instead of /signin
-        <Navigate to={getRedirectPath(userData.role)} />
-      )
-    }
-  />
- <Route
-  path="/create-edit-shop"
-  element={
-    userData?.role === "owner"
-      ? <CreateEditShop />
-      : <Navigate to="/signin" />
-  }
-/>
-</Routes>
+      {/* SIGNIN */}
+      <Route
+        path="/signin"
+        element={
+          !userData ? (
+            <SignIn />
+          ) : (
+            <Navigate to={getRedirectPath(userData.role)} />
+          )
+        }
+      />
+
+      {/* HOME */}
+      <Route
+        path="/"
+        element={
+          !userData ? (
+            <Navigate to="/signin" />
+          ) : userData.role === "user" ? (
+            <>
+              <Navbar />
+              <Home />
+            </>
+          ) : (
+            <Navigate to={getRedirectPath(userData.role)} />
+          )
+        }
+      />
+
+      {/* OWNER DASHBOARD */}
+      <Route
+        path="/owner/dashboard"
+        element={
+          userData?.role === "owner" ? (
+            <OwnerDashboard />
+          ) : (
+            <Navigate to="/signin" />
+          )
+        }
+      />
+
+      {/* DELIVERY DASHBOARD */}
+      <Route
+        path="/delivery/dashboard"
+        element={
+          userData?.role === "deliveryBoy" ? (
+            <div>Delivery Dashboard</div>
+          ) : (
+            <Navigate to="/signin" />
+          )
+        }
+      />
+
+      {/* CREATE / EDIT SHOP */}
+      <Route
+        path="/create-edit-shop"
+        element={
+          userData?.role === "owner" ? (
+            <CreateEditShop />
+          ) : (
+            <Navigate to="/signin" />
+          )
+        }
+      />
+
+      {/* ADD ITEM */}
+      <Route
+        path="/add-item"
+        element={
+          userData?.role === "owner" ? (
+            <AddItem />
+          ) : (
+            <Navigate to="/signin" />
+          )
+        }
+      />
+
+      {/* EDIT ITEM */}
+      <Route
+        path="/edit-item/:itemId"
+        element={
+          userData?.role === "owner" ? (
+            <EditItem />
+          ) : (
+            <Navigate to="/signin" />
+          )
+        }
+      />
+
+    </Routes>
   );
 }
 
-// Helper function to keep code clean
+// REDIRECT HELPER
 const getRedirectPath = (role) => {
   if (role === "owner") return "/owner/dashboard";
   if (role === "deliveryBoy") return "/delivery/dashboard";
+
   return "/";
 };
 
-export default App
+export default App;

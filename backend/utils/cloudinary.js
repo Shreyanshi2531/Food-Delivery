@@ -9,12 +9,17 @@ const uploadOnCloudinary = async (filePath) => {
   });
 
   try {
-    const result = await cloudinary.uploader.upload(file);
-    fs.unlinkSync(file);
+    if (!filePath) return null;
+
+    const result = await cloudinary.uploader.upload(filePath);
+
+    fs.unlinkSync(filePath); // delete from local
+
     return result.secure_url;
   } catch (error) {
-    fs.unlinkSync(file);
+    if (filePath) fs.unlinkSync(filePath);
     console.error("Error uploading to Cloudinary:", error);
+    return null;
   }
 };
 

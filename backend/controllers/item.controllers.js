@@ -24,7 +24,11 @@ export const addItem = async (req, res) => {
       image,
       shop: shop._id,
     });
-    res.status(201).json(item);
+
+    shop.items.push(item._id);
+    await shop.save();
+    await shop.populate("items owner");
+    res.status(201).json(shop);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -38,7 +42,7 @@ export const editItem = async (req, res) => {
     if (req.file) {
       image = await uploadOnCloudinary(req.file.path);
     }
-    const item = await Item.findByIdandUpdate(
+    const item = await Item.findByIdAndUpdate(
       itemId,
       {
         name,
@@ -46,7 +50,7 @@ export const editItem = async (req, res) => {
         foodType,
         description,
         price,
-        image,
+        ...(image && { image }),
       },
       { new: true },
     );
@@ -55,6 +59,46 @@ export const editItem = async (req, res) => {
     }
     res.status(200).json(item);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.log(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const deleteItem = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+
+    const item = await Item.findById(itemId);
+
+    if (!item) {
+      return res.status(404).json({
+        message: "Item not found",
+      });
+    }
+
+    await Shop.findByIdAndUpdate(
+      item.shop,
+      {
+        $pull: {
+          items: itemId,
+        },
+      }
+    );
+
+    await Item.findByIdAndDelete(itemId);
+
+    res.status(200).json({
+      message: "Item deleted successfully",
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
