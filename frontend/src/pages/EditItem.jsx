@@ -6,6 +6,7 @@ import { FaUtensils } from "react-icons/fa6";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import { serverUrl } from "../App";
+import { ClipLoader } from "react-spinners";
 
 function EditItem() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ function EditItem() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [foodType, setFoodType] = useState("Veg");
+  const [loading, setLoading] = useState(false);
 
   // GET CURRENT ITEM
   useEffect(() => {
@@ -41,6 +43,7 @@ function EditItem() {
   // UPDATE ITEM
   const handleSubmit = async (e) => {
   e.preventDefault();
+  setLoading(true);
 
   try {
     const formData = new FormData();
@@ -66,10 +69,12 @@ function EditItem() {
       }
     );
 
+    setLoading(false);
     window.location.href = "/owner/dashboard";
 
   } catch (error) {
     console.log(error);
+    setLoading(false);
   }
 };
 
@@ -199,18 +204,27 @@ function EditItem() {
                 </label>
 
                 <select
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e76f51]"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e76f51]"
                 >
+                  <option value="">Select Category</option>
                   <option>Snacks</option>
-                  <option>Pizzas</option>
-                  <option>Desserts</option>
-                  <option>Drinks</option>
                   <option>Burgers</option>
+                  <option>Pizzas</option>
+                  <option>Salads</option>
                   <option>Fries</option>
-                  <option>Chinese</option>
+                  <option>Sandwiches</option>
+                  <option>Wraps</option>
+                  <option>Pasta</option>
+                  <option>Drinks</option>
+                  <option>Desserts</option>
                   <option>North Indian</option>
+                  <option>South Indian</option>
+                  <option>Chinese</option>
+                  <option>Ice Creams</option>
+                  <option>Momos</option>
+                  <option>Others</option>
                 </select>
               </div>
 
@@ -267,7 +281,7 @@ function EditItem() {
               shadow-md hover:shadow-lg hover:scale-[1.01] 
               active:scale-95 transition-all duration-200 font-medium mt-2"
             >
-              Update Item
+              {loading ? <ClipLoader color="#fff" size={24} /> : "Update Item"}
             </button>
 
           </form>

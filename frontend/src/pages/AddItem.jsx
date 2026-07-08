@@ -7,6 +7,7 @@ import axios from "axios";
 
 import Navbar from "../components/Navbar.jsx";
 import { serverUrl } from "../App";
+import { ClipLoader } from "react-spinners";
 
 function AddItem() {
   const navigate = useNavigate();
@@ -20,41 +21,46 @@ function AddItem() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [isVeg, setIsVeg] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // SUBMIT
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      const formData = new FormData();
+  try {
+    const formData = new FormData();
 
-      formData.append("name", name);
-      formData.append("price", price);
-      formData.append("description", description);
-      formData.append("category", category);
-      formData.append("foodType", isVeg ? "Veg" : "Non Veg");
+    formData.append("name", name);
+    formData.append("price", price);
+    formData.append("description", description);
+    formData.append("category", category);
+    formData.append("foodType", isVeg ? "Veg" : "Non Veg");
 
-      if (image) {
-        formData.append("image", image);
-      }
-
-      await axios.post(
-        `${serverUrl}/api/item/add-item`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true,
-        }
-      );
-
-      navigate("/owner/dashboard");
-
-    } catch (err) {
-      console.log(err);
+    if (image) {
+      formData.append("image", image);
     }
-  };
+
+    await axios.post(
+      `${serverUrl}/api/item/add-item`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      }
+    );
+
+    navigate("/owner/dashboard");
+
+  } catch (err) {
+    console.log(err);
+
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white">
@@ -293,13 +299,23 @@ function AddItem() {
 
             {/* BUTTON */}
             <button
-              type="submit"
-              className="w-full py-3 bg-[#e76f51] text-white rounded-xl 
-              shadow-md hover:shadow-lg hover:scale-[1.01] 
-              active:scale-95 transition-all duration-200 font-medium mt-2"
-            >
-              Add Item
-            </button>
+  type="submit"
+  disabled={loading}
+  className="w-full py-3 bg-[#e76f51] text-white rounded-xl 
+  shadow-md hover:shadow-lg hover:scale-[1.01] 
+  active:scale-95 transition-all duration-200 
+  font-medium mt-2 flex items-center justify-center gap-3
+  disabled:opacity-70 disabled:cursor-not-allowed"
+>
+  {loading ? (
+    <>
+      <ClipLoader color="#fff" size={20} />
+      <span>Adding Item...</span>
+    </>
+  ) : (
+    "Add Item"
+  )}
+</button>
 
           </form>
 

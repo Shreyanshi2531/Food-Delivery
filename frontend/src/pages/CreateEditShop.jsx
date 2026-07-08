@@ -9,6 +9,7 @@ import { serverUrl } from "../App";
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/user.slice.js";
 import { setMyShopData } from "../redux/owner.slice.js";
+import { ClipLoader } from "react-spinners";
 
 function CreateEditShop() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ function CreateEditShop() {
   const { current_city, current_state, current_address } = useSelector(
     (state) => state.user,
   );
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState(myShopData?.image || null);
   const [name, setName] = useState(myShopData?.name || "");
   const [City, setCity] = useState(myShopData?.city || current_city || "");
   const [State, setState] = useState(myShopData?.state || current_state || "");
@@ -27,6 +28,7 @@ function CreateEditShop() {
     myShopData?.address || current_address || "",
   );
   const [phone, setPhone] = useState(myShopData?.phone || "");
+  const [loading, setLoading] = useState(false);
 
   const handleLogOut = async () => {
     try {
@@ -41,6 +43,7 @@ function CreateEditShop() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const formData = new FormData();
       formData.append("name", name);
@@ -52,18 +55,20 @@ function CreateEditShop() {
         formData.append("image", image);
       }
       const result = await axios.post(
-  `${serverUrl}/api/shop/create-edit`,
-  formData,
-  {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    withCredentials: true,
-  }
-);
+        `${serverUrl}/api/shop/create-edit`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        },
+      );
+      setLoading(false);
       dispatch(setMyShopData(result.data));
       navigate("/");
     } catch (err) {
+      setLoading(false);
       console.log(err);
     }
   };
@@ -156,7 +161,11 @@ function CreateEditShop() {
             {image ? (
               <div className="relative w-full h-40 rounded-xl overflow-hidden shadow-md group">
                 <img
-                  src={URL.createObjectURL(image)}
+                  src={
+                    typeof image === "string"
+                      ? image
+                      : URL.createObjectURL(image)
+                  }
                   alt="preview"
                   className="w-full h-full object-cover"
                 />
@@ -266,9 +275,21 @@ function CreateEditShop() {
           {/* BUTTON */}
           <button
             type="submit"
-            className="w-full py-3 bg-[#e76f51] text-white rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-200 font-medium"
+            disabled={loading}
+            className="w-full py-3 bg-[#e76f51] text-white rounded-xl 
+  shadow-md hover:shadow-lg hover:scale-[1.02] 
+  active:scale-95 transition-all duration-200 
+  font-medium flex items-center justify-center gap-3
+  disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {myShopData ? "Update Shop" : "Create Shop"}
+            {loading ? (
+              <>
+                <ClipLoader color="#fff" size={20} />
+                <span>{myShopData ? "Updating..." : "Creating..."}</span>
+              </>
+            ) : (
+              <span>{myShopData ? "Update Shop" : "Create Shop"}</span>
+            )}
           </button>
         </form>
       </div>

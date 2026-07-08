@@ -13,6 +13,7 @@ import Home from "./pages/Home.jsx";
 import CreateEditShop from "./pages/CreateEditShop.jsx";
 import AddItem from "./pages/AddItem.jsx";
 import EditItem from "./pages/EditItem.jsx";
+import RestaurantPage from "./pages/RestaurantPage.jsx";
 
 // COMPONENTS
 import Navbar from "./components/Navbar.jsx";
@@ -22,17 +23,19 @@ import OwnerDashboard from "./components/OwnerDashboard.jsx";
 import useGetCurrentUser from "./hooks/useGetCurrentUser.jsx";
 import useGetCity from "./hooks/useGetCity.jsx";
 import useGetShop from "./hooks/useGetShop.jsx";
+import useGetShops from "./hooks/useGetShops.jsx"; // ⭐ NEW
 
 export const serverUrl = "http://localhost:8000";
 
 function App() {
   const { userData, loading } = useSelector((state) => state.user);
 
+  // CUSTOM HOOKS
   useGetCurrentUser();
   useGetCity();
-  useGetShop();
+  useGetShop(); // Owner's own shop
+  useGetShops(); // All nearby shops for users
 
-  // LOADER
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -43,7 +46,6 @@ function App() {
 
   return (
     <Routes>
-
       {/* FORGOT PASSWORD */}
       <Route
         path="/forgot-password"
@@ -137,11 +139,7 @@ function App() {
       <Route
         path="/add-item"
         element={
-          userData?.role === "owner" ? (
-            <AddItem />
-          ) : (
-            <Navigate to="/signin" />
-          )
+          userData?.role === "owner" ? <AddItem /> : <Navigate to="/signin" />
         }
       />
 
@@ -149,23 +147,28 @@ function App() {
       <Route
         path="/edit-item/:itemId"
         element={
-          userData?.role === "owner" ? (
-            <EditItem />
+          userData?.role === "owner" ? <EditItem /> : <Navigate to="/signin" />
+        }
+      />
+
+      <Route
+        path="/restaurant/:shopId"
+        element={
+          userData?.role === "user" ? (
+            <RestaurantPage />
           ) : (
             <Navigate to="/signin" />
           )
         }
       />
-
     </Routes>
   );
 }
 
-// REDIRECT HELPER
+// Redirect Helper
 const getRedirectPath = (role) => {
   if (role === "owner") return "/owner/dashboard";
   if (role === "deliveryBoy") return "/delivery/dashboard";
-
   return "/";
 };
 

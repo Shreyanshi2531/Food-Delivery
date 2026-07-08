@@ -1,8 +1,10 @@
 import express from "express";
-import { 
-  createEditShop, 
+import {
+  createEditShop,
   getShopByOwner,
-  updateCoverImage
+  updateCoverImage,
+  getShopsByCity,
+  getShopById,
 } from "../controllers/shop.controllers.js";
 
 import { isAuth } from "../middlewares/isAuth.js";
@@ -28,6 +30,16 @@ shopRouter.put(
   isAuth,
   upload.single("image"),
   updateCoverImage
+);
+
+shopRouter.get(
+  "/get-shops/:city",
+  getShopsByCity
+);
+
+shopRouter.get(
+  "/shop/:shopId",
+  getShopById
 );
 
 export default shopRouter;

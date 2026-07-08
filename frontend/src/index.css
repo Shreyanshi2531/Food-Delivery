@@ -5,6 +5,10 @@ body {
   font-family: 'poppins', sans-serif;
 }
 
+html{
+  scroll-behavior:smooth;
+}
+
 /* *{
   padding: 0;
   margin: 0;

@@ -6,7 +6,7 @@ export const createEditShop = async (req, res) => {
     console.log("BODY:", req.body);
     console.log("FILE:", req.file);
     console.log("USER:", req.userId);
-    const { name, city, state, address } = req.body;
+    const { name, city, state, address, phone } = req.body;
     const owner = req.userId;
 
     let image;
@@ -22,6 +22,7 @@ export const createEditShop = async (req, res) => {
         city,
         state,
         address,
+        phone,
         owner,
         image,
       });
@@ -33,6 +34,7 @@ export const createEditShop = async (req, res) => {
           city,
           state,
           address,
+          phone,
           owner,
           ...(image && { image }),
         },
@@ -94,5 +96,57 @@ export const updateCoverImage = async (req, res) => {
     return res.status(500).json({
       message: "Internal server error",
     });
+  }
+};
+
+// NEW FUNCTION TO GET SHOPS BY CITY
+export const getShopsByCity = async (req, res) => {
+  try {
+
+    const { city } = req.params;
+
+    const shops = await Shop.find({
+      city: {
+        $regex: new RegExp(`^${city}$`, "i"),
+      },
+    }).populate("items owner");
+
+    return res.status(200).json(shops);
+
+  } catch (error) {
+
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+
+  }
+};
+
+export const getShopById = async (req, res) => {
+  try {
+
+    const { shopId } = req.params;
+
+    const shop = await Shop.findById(shopId)
+      .populate("items owner");
+
+    if (!shop) {
+      return res.status(404).json({
+        message: "Restaurant not found",
+      });
+    }
+
+    return res.status(200).json(shop);
+
+  } catch (error) {
+
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+
   }
 };

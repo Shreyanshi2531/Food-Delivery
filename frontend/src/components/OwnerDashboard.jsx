@@ -90,14 +90,12 @@ function OwnerDashboard() {
       )}
 
       {myShopData && (
-  <div className="flex flex-col items-center min-h-[80vh] pt-20 px-4 py-10 gap-10">
+  <div className="flex flex-col items-center min-h-[80vh] pt-25 px-4 py-10 gap-10">
 
     {/* SHOP CARD */}
-    <div
-      className="w-full max-w-4xl bg-white/80 backdrop-blur-md 
-      shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
-      rounded-3xl p-6 sm:p-8 border border-gray-100"
-    >
+    <div className="w-[90%] mx-auto bg-white/80 backdrop-blur-md 
+shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
+rounded-3xl p-6 sm:p-8 border border-gray-100">
 
       {/* HEADER */}
       <div className="flex items-center gap-3 mb-6">
@@ -229,7 +227,11 @@ function OwnerDashboard() {
 
     {/* ITEMS GRID */}
     {myShopData.items.length > 0 && (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+      <div
+  className="w-[90%] mx-auto mt-8
+  grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4
+  gap-6 justify-items-center"
+>
         {myShopData.items.map((item) => (
           <OwnerItemCard key={item._id} item={item} />
         ))}

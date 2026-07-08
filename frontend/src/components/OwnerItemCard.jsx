@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { LuIndianRupee } from "react-icons/lu";
+import { FaTrashAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { serverUrl } from "../App";
@@ -98,7 +99,7 @@ function OwnerItemCard({ item }) {
               onClick={() => navigate(`/edit-item/${item._id}`)}
               className="px-4 py-2 rounded-xl bg-[#e76f51] text-white
       text-sm font-medium shadow-md hover:shadow-lg
-      hover:scale-105 active:scale-95 transition-all duration-200"
+      hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >
               Edit
             </button>
@@ -107,9 +108,9 @@ function OwnerItemCard({ item }) {
               onClick={() => setShowDeleteModal(true)}
               className="px-4 py-2 rounded-xl bg-red-100 text-red-600
       text-sm font-medium hover:bg-red-200
-      hover:scale-105 active:scale-95 transition-all duration-200"
+      hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >
-              Delete
+             <FaTrashAlt />
             </button>
           </div>
         </div>
