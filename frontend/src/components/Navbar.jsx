@@ -1,218 +1,540 @@
-import React, { use } from "react";
-import { FaLocationDot } from "react-icons/fa6";
+import React, { useState, useRef, useEffect } from "react";
+import { FaLocationDot, FaPlus } from "react-icons/fa6";
 import { IoIosSearch } from "react-icons/io";
 import { FiShoppingCart } from "react-icons/fi";
 import { RxCross2 } from "react-icons/rx";
-import { useSelector, useDispatch } from "react-redux";
-import { useState } from "react";
-import axios from "axios";
-import { serverUrl } from "../App";
-import { setUserData } from "../redux/user.slice.js";
-import { FaPlus } from "react-icons/fa6";
 import { MdOutlinePendingActions } from "react-icons/md";
+import { IoChevronDown } from "react-icons/io5";
+import { RiArrowDropDownLine } from "react-icons/ri";
+
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+import { serverUrl } from "../App";
+import { setUserData } from "../redux/user.slice";
 
 function Navbar() {
   const { userData, current_city } = useSelector((state) => state.user);
   const { myShopData } = useSelector((state) => state.owner);
-  const [showInfo, setShowInfo] = useState(false);
+  const { items } = useSelector((state) => state.cart);
+
   const navigate = useNavigate();
-  const [showSearch, setShowSearch] = useState(false);
   const dispatch = useDispatch();
+
+  const [showInfo, setShowInfo] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const locationRef = useRef(null);
 
   const handleLogOut = async () => {
     try {
-      const result = await axios.get(`${serverUrl}/api/auth/signout`, {
+      await axios.get(`${serverUrl}/api/auth/signout`, {
         withCredentials: true,
       });
+
       dispatch(setUserData(null));
     } catch (err) {
       console.log(err);
     }
   };
 
+  useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (
+      locationRef.current &&
+      !locationRef.current.contains(e.target)
+    ) {
+      setShowLocationDropdown(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
+
   return (
-    <div className="w-full h-20 flex items-center justify-between px-4 md:px-10 lg:px-15 fixed bg-[#FFF8F2] backdrop-blur-sm z-50">
-      {/* MOBILE SEARCH BAR */}
-      {showSearch && userData?.role === "user" && (
-        <div className="md:hidden absolute top-20 left-3.5 w-85 h-12 bg-white border border-gray-100 shadow-md rounded-xl flex items-center gap-2 px-2">
-          <div className="flex items-center w-[30%] overflow-hidden gap-2 px-2 border-r border-gray-300">
-            <FaLocationDot size={18} className="text-[#e76f51]" />
-            <div className="text-xs font-medium text-gray-600 truncate w-[80%]">
-              {current_city}
-            </div>
-          </div>
-
-          <div className="w-[68%] flex items-center gap-1 px-1 relative">
-            <IoIosSearch size={20} className="text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-full text-xs px-1 py-1 outline-none placeholder:text-gray-400"
-            />
-            <RxCross2
-              size={20}
-              className="text-gray-400 cursor-pointer"
-              onClick={() => setShowSearch(false)}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* LOGO */}
-      <h1
-        className="text-2xl md:text-4xl text-[#E76F51]"
-        style={{ fontFamily: "pacifico" }}
+    <>
+      <nav
+        className="
+        fixed
+        top-0
+        left-0
+        right-0
+        h-20
+        bg-[#FFF8F2]/95
+        backdrop-blur-md
+        border-b
+        border-gray-100
+        z-50
+        "
       >
-        Savora
-      </h1>
+        <div
+          className="
+          max-w-[1400px]
+          mx-auto
+          h-full
+          px-4
+          lg:px-8
+          flex
+          items-center
+          justify-between
+          "
+        >
+          {/* LEFT */}
 
-      {/* USER SEARCH (MD+) */}
-      {userData?.role === "user" && (
-        <div className="hidden md:flex w-[40%] h-12 bg-white border border-gray-100 shadow-md rounded-xl items-center gap-3 px-2">
-          <div className="flex items-center w-[30%] overflow-hidden gap-2 px-2 border-r border-gray-300">
-            <FaLocationDot size={18} className="text-[#e76f51]" />
-            <div className="text-sm font-medium text-gray-600 truncate w-[80%]">
-              {current_city}
-            </div>
+          <div
+            className="
+            flex
+            items-center
+            w-[170px]
+            lg:w-[200px]
+            "
+          >
+            <h1
+              onClick={() => navigate("/")}
+              className="
+              text-[34px]
+              lg:text-[38px]
+              text-[#E76F51]
+              cursor-pointer
+              select-none
+              "
+              style={{ fontFamily: "Pacifico" }}
+            >
+              Savora
+            </h1>
           </div>
 
-          <div className="w-[70%] flex items-center gap-2 px-2">
-            <input
-              type="text"
-              placeholder="Search for restaurants or dishes..."
-              className="w-full text-sm outline-none placeholder:text-gray-400"
-            />
-            <IoIosSearch
-              size={20}
-              className="text-gray-400 cursor-pointer"
-              onClick={() => setShowSearch(true)}
-            />
-          </div>
-        </div>
-      )}
+          {/* CENTER */}
 
-      {/* RIGHT SIDE */}
-      <div className="flex items-center gap-2 md:gap-4">
-        {/* USER MOBILE SEARCH ICON */}
-        {userData?.role === "user" && (
-          <IoIosSearch
-            size={22}
-            className="cursor-pointer md:hidden text-[#e76f51]"
-            onClick={() => setShowSearch(true)}
-          />
-        )}
-
-        {/* OWNER SECTION */}
-        {userData?.role === "owner" ? (
-          <div className="flex items-center gap-3 md:gap-4">
-            {/* IF SHOP EXISTS */}
-            {myShopData ? (
-              <>
-                {/* ADD ITEM */}
-                <button
-                  className="flex items-center justify-center gap-1 px-2 md:px-3 h-8 
-                rounded-full bg-[#ec7456] text-white font-medium shadow-lg
-                hover:scale-105 transition cursor-pointer"
-                onClick={() => navigate("/add-item")}
-                >
-                  <FaPlus size={16} />
-                  <span className="hidden md:inline">Add Item</span>
-                </button>
-
-                {/* PENDING */}
-                <div className="relative">
-                  <div
-                    className="flex items-center justify-center gap-1 px-2 md:px-3 h-8 
-                  rounded-full bg-[#ec7456] text-white font-medium shadow-lg
-                  hover:scale-105 transition cursor-pointer"
-                  >
-                    <MdOutlinePendingActions size={16} />
-                    <span className="hidden md:inline">Pending Orders</span>
-                  </div>
-
-                  <span className="absolute -top-1 -right-1.5 bg-white text-[#e76f51] text-[10px] font-bold min-w-4 h-4 flex items-center justify-center rounded-full shadow">
-                    0
-                  </span>
-                </div>
-              </>
-            ) : (
-              <button
-                className="px-3 py-2 rounded-lg bg-[#e76f51] text-white text-sm font-medium hover:scale-105 transition cursor-pointer"
-                onClick={() => navigate("/create-edit-shop")}
+          {userData?.role === "user" ? (
+            <div
+              className="
+              hidden
+              md:flex
+              flex-1
+              justify-center
+              "
+            >
+              <div
+                className="
+                w-full
+                max-w-[620px]
+                h-14
+                bg-white
+                rounded-2xl
+                border
+                border-gray-200
+                shadow-md
+                flex
+                overflow-hidden
+                "
               >
-                Create Shop
+                <div className="relative" ref={locationRef}>
+
+  <button
+    onClick={() => setShowLocationDropdown((prev) => !prev)}
+    className="
+      w-[180px]
+      flex
+      items-center
+      justify-between
+      px-5
+      h-full
+      border-r
+      border-gray-200
+      hover:bg-gray-50
+      transition
+    "
+  >
+    <div className="flex items-center gap-2">
+
+      <FaLocationDot className="text-[#E76F51]" />
+
+      <span className="truncate font-medium text-gray-700">
+        {current_city}
+      </span>
+
+    </div>
+
+    <span
+      className={`transition ${
+        showLocationDropdown ? "rotate-180" : ""
+      }`}
+    >
+      <RiArrowDropDownLine />
+    </span>
+
+  </button>
+
+  {showLocationDropdown && (
+  <div
+    className="
+      absolute
+      top-[64px]
+      left-0
+      w-[340px]
+      bg-white
+      rounded-2xl
+      shadow-xl
+      border
+      border-gray-100
+      overflow-hidden
+      z-50
+      animate-in
+      fade-in
+      zoom-in
+      duration-150
+    "
+  >
+    {/* GPS */}
+
+    <button
+      onClick={() => {
+        // Call your existing location function here
+        // Example:
+        // getCurrentLocation();
+
+        setShowLocationDropdown(false);
+      }}
+      className="
+        w-full
+        px-5
+        py-4
+        text-left
+        hover:bg-[#FFF8F2]
+        transition
+      "
+    >
+      <div className="flex gap-3">
+
+        <FaLocationDot
+          size={18}
+          className="text-[#E76F51] mt-1"
+        />
+
+        <div>
+
+          <h3 className="font-semibold text-[#E76F51]">
+            Detect Current Location
+          </h3>
+
+          <p className="text-sm text-gray-500">
+            Using GPS
+          </p>
+
+        </div>
+
+      </div>
+    </button>
+
+    <div className="border-t border-gray-100 px-5 py-4">
+
+      <input
+        type="text"
+        placeholder="Search for another location..."
+        className="
+          w-full
+          rounded-xl
+          border
+          border-gray-200
+          px-4
+          py-3
+          outline-none
+          focus:border-[#E76F51]
+          transition
+        "
+      />
+
+    </div>
+
+  </div>
+)}
+
+</div>
+
+                <div className="flex-1 flex items-center px-5">
+                  <input
+                    type="text"
+                    placeholder="Search restaurants or dishes..."
+                    className="
+                    flex-1
+                    outline-none
+                    text-sm
+                    placeholder:text-gray-400
+                    "
+                  />
+
+                  <IoIosSearch size={22} className="text-gray-400" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1" />
+          )}
+
+          {/* RIGHT */}
+
+          <div
+            className="
+            flex
+            items-center
+            gap-4
+            lg:gap-5
+            "
+          >
+            {userData?.role === "user" && (
+              <button className="md:hidden" onClick={() => setShowSearch(true)}>
+                <IoIosSearch size={24} className="text-[#E76F51]" />
               </button>
             )}
 
-            {/* PROFILE */}
-            <div
-              className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 
-              rounded-full bg-[#e76f51] text-white text-xl
-              shadow-md cursor-pointer"
-              onClick={() => setShowInfo((prev) => !prev)}
-            >
-              {userData?.fullName?.slice(0, 1)}
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* CART */}
-            <div className="relative cursor-pointer">
-              <FiShoppingCart size={22} className="text-[#e76f51]" />
-              <span className="absolute -right-2 -top-2 text-[10px] bg-[#e76f51] text-white rounded-full px-1.5">
-                0
-              </span>
-            </div>
+            {showSearch && userData?.role === "user" && (
+              <div
+                className="
+                absolute
+                top-20
+                left-4
+                right-4
+                md:hidden
+                bg-white
+                rounded-2xl
+                shadow-lg
+                border
+                border-gray-200
+                flex
+                items-center
+                px-3
+                py-3
+                "
+              >
+                <FaLocationDot className="text-[#E76F51]" />
 
-            {/* ORDERS */}
-            <button className="hidden md:block px-3 py-2 rounded-lg bg-[#e76f51]/10 text-[#e76f51] text-sm font-medium">
-              My Orders
-            </button>
+                <span className="mx-3 text-sm truncate">{current_city}</span>
 
-            {/* PROFILE */}
-            <div
-              className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 
-              rounded-full bg-[#e76f51] text-white font-semibold cursor-pointer"
-              onClick={() => setShowInfo((prev) => !prev)}
-            >
-              {userData?.fullName?.slice(0, 1)}
-            </div>
-          </>
-        )}
+                <input
+                  className="flex-1 outline-none text-sm"
+                  placeholder="Search..."
+                />
 
-        {/* DROPDOWN */}
-        {showInfo && (
-          <div className="absolute top-17 right-8 w-44 bg-white shadow-xl border border-gray-100 rounded-2xl p-2 z-50 animate-in fade-in zoom-in duration-200">
-            {/* Name Section */}
-            <div className="px-4 py-3 border-b border-gray-50">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                Account
-              </p>
-              <p className="text-[15px] font-bold text-[#264653] truncate">
-                {userData?.fullName?.split(" ")[0]}{" "}
-              </p>
-            </div>
+                <RxCross2
+                  size={22}
+                  onClick={() => setShowSearch(false)}
+                  className="cursor-pointer text-gray-500"
+                />
+              </div>
+            )}
 
-            <div className="flex flex-col p-1">
-              {userData?.role === "user" && (
-                <button className="md:hidden flex px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg text-left transition-colors">
+            {/* OWNER */}
+
+            {userData?.role === "owner" ? (
+              myShopData ? (
+                <>
+                  <button
+                    onClick={() => navigate("/add-item")}
+                    className="
+        hidden
+        md:flex
+        items-center
+        gap-2
+        bg-[#E76F51]
+        hover:bg-[#d86345]
+        text-white
+        px-4
+        py-2.5
+        rounded-xl
+        transition
+        font-medium
+        "
+                  >
+                    <FaPlus size={14} />
+                    Add Item
+                  </button>
+
+                  <button
+                    className="
+        hidden
+        md:flex
+        items-center
+        gap-2
+        bg-[#fff2ec]
+        text-[#E76F51]
+        px-4
+        py-2.5
+        rounded-xl
+        transition
+        hover:bg-[#ffe7de]
+        font-medium
+        "
+                  >
+                    <MdOutlinePendingActions size={18} />
+                    Orders
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => navigate("/create-edit-shop")}
+                  className="
+      bg-[#E76F51]
+      hover:bg-[#d86345]
+      text-white
+      px-5
+      py-2.5
+      rounded-xl
+      transition
+      font-medium
+      "
+                >
+                  Create Shop
+                </button>
+              )
+            ) : (
+              <>
+                {/* CART */}
+
+                <button
+                  onClick={() => navigate("/cart")}
+                  className="
+      relative
+      p-3
+      rounded-full
+      hover:bg-[#fff2ec]
+      transition
+      "
+                >
+                  <FiShoppingCart size={23} className="text-[#264653]" />
+
+                  {items.length > 0 && (
+                    <span
+                      className="
+          absolute
+          -top-1
+          -right-1
+          min-w-5
+          h-5
+          rounded-full
+          bg-[#E76F51]
+          text-white
+          text-[10px]
+          flex
+          items-center
+          justify-center
+          font-bold
+          "
+                    >
+                      {items.reduce((total, item) => total + item.quantity, 0)}
+                    </span>
+                  )}
+                </button>
+
+                {/* ORDERS */}
+
+                <button
+                  onClick={() => navigate("/my-orders")}
+                  className="md:hidden flex px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg text-left transition-colors"
+                >
                   My Orders
                 </button>
-              )}
 
-              {/* Logout Button */}
-              <button
-                className="flex w-full px-3 py-2 text-[#e76f51] font-bold text-sm hover:bg-red-50 rounded-lg transition-colors text-left"
-                onClick={handleLogOut}
-              >
-                Logout
-              </button>
-            </div>
+                <button
+                  onClick={() => navigate("/my-orders")}
+                  className="hidden md:block font-medium text-gray-700 hover:text-[#E76F51] transition"
+                >
+                  My Orders
+                </button>
+              </>
+            )}
+
+            {/* PROFILE */}
+
+            <button
+              onClick={() => setShowInfo(!showInfo)}
+              className="
+  w-11
+  h-11
+  rounded-full
+  bg-[#E76F51]
+  text-white
+  font-semibold
+  shadow-md
+  hover:scale-105
+  transition
+  "
+            >
+              {userData?.fullName?.charAt(0)}
+            </button>
           </div>
-        )}
-      </div>
-    </div>
+
+          {/* DROPDOWN */}
+
+          {showInfo && (
+            <div
+              className="
+    absolute
+    top-[76px]
+    right-6
+    w-56
+    bg-white
+    rounded-2xl
+    shadow-xl
+    border
+    border-gray-100
+    overflow-hidden
+    "
+            >
+              <div className="px-5 py-4 border-b border-gray-100">
+                <p className="text-xs uppercase tracking-wider text-gray-400">
+                  Account
+                </p>
+
+                <h3 className="mt-1 font-semibold text-[#264653]">
+                  {userData?.fullName}
+                </h3>
+              </div>
+
+              <div className="py-2">
+                {userData?.role === "user" && (
+                  <button
+                    className="
+          md:hidden
+          w-full
+          text-left
+          px-5
+          py-3
+          hover:bg-gray-50
+          transition
+          "
+                  >
+                    My Orders
+                  </button>
+                )}
+
+                <button
+                  onClick={handleLogOut}
+                  className="
+        w-full
+        text-left
+        px-5
+        py-3
+        text-[#E76F51]
+        font-semibold
+        hover:bg-red-50
+        transition
+        "
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+    </>
   );
 }
 

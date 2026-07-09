@@ -1,26 +1,31 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { ClipLoader } from "react-spinners";
+
 import Navbar from "../components/Navbar";
 import MenuItem from "../components/MenuItem";
 import { serverUrl } from "../App";
-import { ClipLoader } from "react-spinners";
 
 function RestaurantPage() {
   const { shopId } = useParams();
+
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("");
+
   const sectionRefs = useRef({});
 
+  // Fetch Restaurant
   useEffect(() => {
     const fetchRestaurant = async () => {
       try {
         const res = await axios.get(`${serverUrl}/api/shop/shop/${shopId}`);
+
         setShop(res.data);
-      } catch (error) {
-        console.log(error);
+      } catch (err) {
+        console.log(err);
       } finally {
         setLoading(false);
       }
@@ -29,7 +34,35 @@ function RestaurantPage() {
     fetchRestaurant();
   }, [shopId]);
 
+  // Search Items
+  const filteredItems = shop
+    ? shop.items.filter((item) => {
+        const query = search.toLowerCase().trim();
+
+        return (
+          item.name.toLowerCase().includes(query) ||
+          item.description.toLowerCase().includes(query) ||
+          item.category.toLowerCase().includes(query) ||
+          item.foodType.toLowerCase().includes(query)
+        );
+      })
+    : [];
+
+  // Group By Category
+  const groupedItems = {};
+
+  filteredItems.forEach((item) => {
+    if (!groupedItems[item.category]) {
+      groupedItems[item.category] = [];
+    }
+
+    groupedItems[item.category].push(item);
+  });
+
+  // Active Category Observer
   useEffect(() => {
+    if (!shop) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -37,9 +70,10 @@ function RestaurantPage() {
             setActiveCategory(entry.target.id);
           }
         });
-      }, [shop, search]);
+      },
       {
-        threshold: 0.35,
+        threshold: 0.3,
+        rootMargin: "-100px 0px -45% 0px",
       },
     );
 
@@ -48,11 +82,11 @@ function RestaurantPage() {
     });
 
     return () => observer.disconnect();
-  }, [groupedItems]);
+  }, [shop, search]);
 
   if (loading) {
     return (
-      <div className="h-screen flex justify-center items-center">
+      <div className="h-screen flex items-center justify-center">
         <ClipLoader color="#E76F51" size={45} />
       </div>
     );
@@ -60,82 +94,53 @@ function RestaurantPage() {
 
   if (!shop) {
     return (
-      <div className="h-screen flex justify-center items-center">
+      <div className="h-screen flex items-center justify-center">
         Restaurant not found
       </div>
     );
   }
-
-  const filteredItems = shop.items.filter(
-    (item) =>
-      item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.description.toLowerCase().includes(search.toLowerCase()),
-  );
-
-  const groupedItems = filteredItems.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {});
 
   return (
     <>
       <Navbar />
 
       <div className="pt-24 bg-[#fff9f6] min-h-screen pb-20">
-        <div className="w-[92%] lg:w-[85%] mx-auto">
-          {/* COVER */}
+        <div className="w-[90%] mx-auto">
+          {/* Restaurant Header */}
 
-          <img
-            src={shop.image}
-            alt={shop.name}
-            className="w-full h-[180px] rounded-3xl object-cover"
-          />
+          <div className="bg-white rounded-3xl shadow-md overflow-hidden">
+            <img
+              src={shop.image}
+              alt={shop.name}
+              className="w-full h-[220px] object-cover"
+            />
 
-          {/* HEADER */}
+            <div className="p-8">
+              <h1 className="text-4xl font-bold text-[#1D2939]">{shop.name}</h1>
 
-          <div className="bg-white rounded-3xl shadow-sm mt-5 p-6">
-            <div className="flex flex-col lg:flex-row justify-between gap-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {shop.name}
-                </h1>
+              <div className="flex flex-wrap items-center gap-3 mt-3 text-gray-500">
+                <span>⭐ 4.5</span>
 
-                <p className="text-gray-500 mt-3">{shop.address}</p>
+                <span>•</span>
 
-                <p className="text-[#E76F51] font-medium mt-2">
-                  {shop.city}, {shop.state}
-                </p>
+                <span>25-35 mins</span>
+
+                <span>•</span>
+
+                <span>{shop.items.length} Items</span>
               </div>
 
-              <div
-                className="
-                bg-[#fff7f3]
-                rounded-2xl
-                px-6
-                py-5
-                min-w-[220px]
-                h-fit
-                "
-              >
-                <div className="flex justify-between">
-                  <span className="font-semibold text-green-600">⭐ 4.5</span>
+              <p className="mt-3 text-gray-600">{shop.address}</p>
 
-                  <span className="text-gray-500">25-35 mins</span>
-                </div>
-
-                <div className="border-t my-4"></div>
-
-                <p className="text-gray-600 text-sm">
-                  {shop.items.length} Items Available
-                </p>
-              </div>
+              <p className="text-[#E76F51] mt-2 font-medium">
+                {shop.city}, {shop.state}
+              </p>
             </div>
           </div>
 
-          {/* SEARCH */}
+          {/* Search */}
 
-          <div className="flex justify-center mt-8">
+          <div className="flex justify-center mt-10">
             <input
               type="text"
               value={search}
@@ -143,95 +148,84 @@ function RestaurantPage() {
               placeholder="Search within menu..."
               className="
               w-full
-              lg:w-[450px]
-              px-5
-              py-3
-              rounded-xl
+              lg:w-[520px]
+              px-6
+              py-4
+              rounded-2xl
+              bg-white
               border
               border-gray-300
-              bg-white
               outline-none
+              focus:border-[#E76F51]
               focus:ring-2
               focus:ring-[#E76F51]/20
-              focus:border-[#E76F51]
               transition
               "
             />
           </div>
 
-          {/* MENU */}
+          {/* Content */}
 
-          <div className="flex gap-12 mt-12">
-            {/* LEFT SIDEBAR */}
+          <div className="flex gap-14 mt-12">
+            {/* Sidebar */}
 
             <div
               className="
               hidden
               lg:block
-              w-60
+              w-64
               sticky
               top-28
               self-start
               "
             >
-              <h2 className="text-xl font-bold mb-5">Categories</h2>
+              <h2 className="font-bold text-2xl mb-6">Categories</h2>
 
               {Object.entries(groupedItems).map(([category, items]) => (
                 <button
                   key={category}
                   onClick={() => {
-  setActiveCategory(category);
-
-  sectionRefs.current[category]?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-}}
-                  className={`
-w-full
-text-left
-flex
-justify-between
-items-center
-px-4
-py-3
-rounded-xl
-mb-2
-transition-all
-duration-200
-${
-  activeCategory === category
-    ? "bg-[#E76F51] text-white shadow-md"
-    : "hover:bg-[#fff3ee] hover:text-[#E76F51]"
-}
-`}
+                    sectionRefs.current[category]?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }}
+                  className={`w-full flex justify-between items-center px-4 py-3 rounded-xl mb-2 transition ${
+                    activeCategory === category
+                      ? "bg-[#E76F51] text-white"
+                      : "hover:bg-[#fff1ec]"
+                  }`}
                 >
-                  <span className="font-medium">{category}</span>
+                  <span>{category}</span>
 
-                  <span className="text-gray-400 text-sm">{items.length}</span>
+                  <span>{items.length}</span>
                 </button>
               ))}
             </div>
 
-            {/* RIGHT */}
+            {/* Menu */}
 
             <div className="flex-1">
-              {Object.entries(groupedItems).map(([category, items]) => (
-                <section
-  id={category}
-  ref={(el) => (sectionRefs.current[category] = el)}
-                  key={category}
-                  className="mb-16 scroll-mt-28"
-                >
-                  <h2 className="text-2xl font-bold text-[#E76F51] mb-4">
-                    {category}
-                  </h2>
+              {Object.keys(groupedItems).length === 0 ? (
+                <div className="text-center py-20 text-gray-500">
+                  No matching food items found.
+                </div>
+              ) : (
+                Object.entries(groupedItems).map(([category, items]) => (
+                  <section
+                    key={category}
+                    id={category}
+                    ref={(el) => (sectionRefs.current[category] = el)}
+                    className="mb-14 scroll-mt-28"
+                  >
+                    <h2 className="text-3xl font-bold mb-6">{category}</h2>
 
-                  {items.map((item) => (
-                    <MenuItem key={item._id} item={item} />
-                  ))}
-                </section>
-              ))}
+                    {items.map((item) => (
+                      <MenuItem key={item._id} item={item} shopId={shop._id} />
+                    ))}
+                  </section>
+                ))
+              )}
             </div>
           </div>
         </div>

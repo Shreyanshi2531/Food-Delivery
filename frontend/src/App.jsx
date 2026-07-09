@@ -14,6 +14,9 @@ import CreateEditShop from "./pages/CreateEditShop.jsx";
 import AddItem from "./pages/AddItem.jsx";
 import EditItem from "./pages/EditItem.jsx";
 import RestaurantPage from "./pages/RestaurantPage.jsx";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import MyOrders from "./pages/MyOrders";
 
 // COMPONENTS
 import Navbar from "./components/Navbar.jsx";
@@ -98,6 +101,22 @@ function App() {
           )
         }
       />
+
+      <Route
+        path="/cart"
+        element={
+          userData?.role === "user" ? <Cart /> : <Navigate to="/signin" />
+        }
+      />
+
+      <Route
+        path="/checkout" 
+        element={
+          <Checkout />
+         }
+      />
+
+      <Route path="/my-orders" element={<MyOrders />} />
 
       {/* OWNER DASHBOARD */}
       <Route
