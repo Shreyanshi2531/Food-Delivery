@@ -17,6 +17,7 @@ import RestaurantPage from "./pages/RestaurantPage.jsx";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import MyOrders from "./pages/MyOrders";
+import OwnerOrders from "./pages/OwnerOrders";
 
 // COMPONENTS
 import Navbar from "./components/Navbar.jsx";
@@ -26,7 +27,8 @@ import OwnerDashboard from "./components/OwnerDashboard.jsx";
 import useGetCurrentUser from "./hooks/useGetCurrentUser.jsx";
 import useGetCity from "./hooks/useGetCity.jsx";
 import useGetShop from "./hooks/useGetShop.jsx";
-import useGetShops from "./hooks/useGetShops.jsx"; // ⭐ NEW
+import useGetShops from "./hooks/useGetShops.jsx";
+import useGetShopOrders from "./hooks/useGetShopOrders"; 
 
 export const serverUrl = "http://localhost:8000";
 
@@ -37,6 +39,7 @@ function App() {
   useGetCurrentUser();
   useGetCity();
   useGetShop(); // Owner's own shop
+  useGetShopOrders(); // Owner's shop orders
   useGetShops(); // All nearby shops for users
 
   if (loading) {
@@ -109,12 +112,7 @@ function App() {
         }
       />
 
-      <Route
-        path="/checkout" 
-        element={
-          <Checkout />
-         }
-      />
+      <Route path="/checkout" element={<Checkout />} />
 
       <Route path="/my-orders" element={<MyOrders />} />
 
@@ -124,6 +122,17 @@ function App() {
         element={
           userData?.role === "owner" ? (
             <OwnerDashboard />
+          ) : (
+            <Navigate to="/signin" />
+          )
+        }
+      />
+
+      <Route
+        path="/owner/orders"
+        element={
+          userData?.role === "owner" ? (
+            <OwnerOrders />
           ) : (
             <Navigate to="/signin" />
           )

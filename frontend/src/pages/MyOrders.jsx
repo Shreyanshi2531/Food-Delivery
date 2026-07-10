@@ -4,20 +4,46 @@ import axios from "axios";
 import { serverUrl } from "../App";
 import { LuIndianRupee } from "react-icons/lu";
 import { ClipLoader } from "react-spinners";
+import ConfirmModal from "../components/ConfirmModal";
 
 function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+
+  // Cancel Order
+  const cancelOrder = async (orderId) => {
+    try {
+      await axios.put(
+        `${serverUrl}/api/order/update-status/${orderId}`,
+        {
+          status: "Cancelled",
+        },
+        {
+          withCredentials: true,
+        },
+      );
+
+      // Refresh orders
+      const res = await axios.get(`${serverUrl}/api/order/my-orders`, {
+        withCredentials: true,
+      });
+
+      setOrders(res.data.orders);
+    } catch (error) {
+      console.log(error);
+
+      alert(error.response?.data?.message || "Failed to cancel order.");
+    }
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get(
-          `${serverUrl}/api/order/my-orders`,
-          {
-            withCredentials: true,
-          }
-        );
+        const res = await axios.get(`${serverUrl}/api/order/my-orders`, {
+          withCredentials: true,
+        });
 
         setOrders(res.data.orders);
       } catch (error) {
@@ -30,7 +56,7 @@ function MyOrders() {
     fetchOrders();
   }, []);
 
-    const getStatusColor = (status) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case "Pending":
         return "bg-yellow-100 text-yellow-700";
@@ -55,7 +81,7 @@ function MyOrders() {
     }
   };
 
-    if (loading) {
+  if (loading) {
     return (
       <div className="h-screen flex justify-center items-center">
         <ClipLoader color="#E76F51" size={45} />
@@ -63,25 +89,20 @@ function MyOrders() {
     );
   }
 
-    return (
+  return (
     <>
       <Navbar />
 
       <div className="pt-28 pb-16 min-h-screen bg-[#fff9f6]">
         <div className="w-[92%] max-w-6xl mx-auto">
-
-          <h1 className="text-4xl font-bold mb-2">
-            My Orders
-          </h1>
+          <h1 className="text-4xl font-bold mb-2">My Orders</h1>
 
           <p className="text-gray-500 mb-8">
             Track your current and previous food orders.
           </p>
 
           {orders.length === 0 ? (
-
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-16 text-center">
-
               <h2 className="text-2xl font-semibold text-gray-700">
                 No Orders Yet 🍽️
               </h2>
@@ -89,15 +110,10 @@ function MyOrders() {
               <p className="text-gray-500 mt-3">
                 Looks like you haven't placed any orders.
               </p>
-
             </div>
-
           ) : (
-
             <div className="space-y-6">
-
               {orders.map((order) => (
-
                 <div
                   key={order._id}
                   className="
@@ -109,13 +125,10 @@ function MyOrders() {
                   p-6
                   "
                 >
-
                   {/* TOP */}
 
                   <div className="flex justify-between items-start flex-wrap gap-4">
-
                     <div>
-
                       <h2 className="text-2xl font-bold text-gray-800">
                         {order.shop?.name}
                       </h2>
@@ -123,7 +136,6 @@ function MyOrders() {
                       <p className="text-gray-500 mt-2">
                         {new Date(order.createdAt).toLocaleString()}
                       </p>
-
                     </div>
 
                     <span
@@ -138,7 +150,6 @@ function MyOrders() {
                     >
                       {order.orderStatus}
                     </span>
-
                   </div>
 
                   <hr className="my-6" />
@@ -146,14 +157,8 @@ function MyOrders() {
                   {/* ITEMS */}
 
                   <div className="space-y-4">
-
                     {order.items.map((item, index) => (
-
-                      <div
-                        key={index}
-                        className="flex items-center gap-4"
-                      >
-
+                      <div key={index} className="flex items-center gap-4">
                         <img
                           src={item.image}
                           alt={item.name}
@@ -166,29 +171,20 @@ function MyOrders() {
                         />
 
                         <div className="flex-1">
-
-                          <h3 className="font-semibold">
-                            {item.name}
-                          </h3>
+                          <h3 className="font-semibold">{item.name}</h3>
 
                           <p className="text-sm text-gray-500">
                             Qty : {item.quantity}
                           </p>
-
                         </div>
 
                         <div className="flex items-center font-semibold">
-
                           <LuIndianRupee />
 
                           {item.price * item.quantity}
-
                         </div>
-
                       </div>
-
                     ))}
-
                   </div>
 
                   <hr className="my-6" />
@@ -196,47 +192,58 @@ function MyOrders() {
                   {/* FOOTER */}
 
                   <div className="flex justify-between items-center flex-wrap gap-4">
-
                     <div>
+                      <p className="text-gray-500 text-sm">Delivery Address</p>
 
-                      <p className="text-gray-500 text-sm">
-                        Delivery Address
-                      </p>
-
-                      <p className="font-medium mt-1">
-                        {order.address}
-                      </p>
-
+                      <p className="font-medium mt-1">{order.address}</p>
                     </div>
 
                     <div className="text-right">
-
-                      <p className="text-gray-500 text-sm">
-                        Total Paid
-                      </p>
+                      <p className="text-gray-500 text-sm">Total Paid</p>
 
                       <div className="flex items-center justify-end text-2xl font-bold text-[#E76F51]">
-
                         <LuIndianRupee />
-
                         {order.totalAmount}
-
                       </div>
 
+                      {(order.orderStatus === "Pending" ||
+                        order.orderStatus === "Accepted") && (
+                        <button
+                          onClick={() => {
+                            setSelectedOrderId(order._id);
+                            setShowCancelModal(true);
+                          }}
+                          className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition"
+                        >
+                          Cancel Order
+                        </button>
+                      )}
                     </div>
-
                   </div>
-
                 </div>
-
               ))}
-
             </div>
-
           )}
-
         </div>
       </div>
+      <ConfirmModal
+        isOpen={showCancelModal}
+        title="Cancel Order"
+        message="Are you sure you want to cancel this order? Once cancelled, the restaurant will be notified immediately."
+        confirmText="Yes, Cancel"
+        cancelText="Keep Order"
+        onCancel={() => {
+          setShowCancelModal(false);
+          setSelectedOrderId(null);
+        }}
+        onConfirm={async () => {
+          setShowCancelModal(false);
+
+          await cancelOrder(selectedOrderId);
+
+          setSelectedOrderId(null);
+        }}
+      />
     </>
   );
 }

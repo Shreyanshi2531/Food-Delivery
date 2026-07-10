@@ -6,7 +6,7 @@ import {
   getShopsByCity,
   getShopById,
 } from "../controllers/shop.controllers.js";
-
+import { getCities } from "../controllers/shop.controllers.js";
 import { isAuth } from "../middlewares/isAuth.js";
 import { upload } from "../middlewares/multar.js";
 
@@ -41,5 +41,7 @@ shopRouter.get(
   "/shop/:shopId",
   getShopById
 );
+
+shopRouter.get("/cities", getCities);
 
 export default shopRouter;

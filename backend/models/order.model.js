@@ -8,6 +8,12 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    customerName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
     shop: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Shop",
@@ -38,10 +44,22 @@ const orderSchema = new mongoose.Schema(
       trim: true,
     },
 
+    landmark: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
     phone: {
       type: String,
       required: true,
       trim: true,
+    },
+
+    note: {
+      type: String,
+      trim: true,
+      default: "",
     },
 
     subtotal: {
@@ -91,7 +109,7 @@ const orderSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Order = mongoose.model("Order", orderSchema);

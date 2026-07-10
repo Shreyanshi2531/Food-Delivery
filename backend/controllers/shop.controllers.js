@@ -150,3 +150,21 @@ export const getShopById = async (req, res) => {
 
   }
 };
+
+export const getCities = async (req, res) => {
+  try {
+    const cities = await Shop.distinct("city");
+
+    res.status(200).json({
+      success: true,
+      cities,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch cities",
+    });
+  }
+};

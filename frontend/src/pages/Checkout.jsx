@@ -34,19 +34,19 @@ function Checkout() {
 
   const handlePlaceOrder = async () => {
     if (!name.trim()) {
-    toast.error("Please enter your name.");
-    return;
-  }
+      toast.error("Please enter your name.");
+      return;
+    }
 
-  if (!phone.trim()) {
-    toast.error("Please enter your phone number.");
-    return;
-  }
+    if (!phone.trim()) {
+      toast.error("Please enter your phone number.");
+      return;
+    }
 
-  if (!address.trim()) {
-    toast.error("Please enter your delivery address.");
-    return;
-  }
+    if (!address.trim()) {
+      toast.error("Please enter your delivery address.");
+      return;
+    }
 
     try {
       const orderItems = items.map((item) => ({
@@ -61,9 +61,12 @@ function Checkout() {
         `${serverUrl}/api/order/place-order`,
         {
           shop: items[0].shop,
+          customerName: name,
           items: orderItems,
           address,
+          landmark,
           phone,
+          note,
           subtotal,
           deliveryFee,
           gst,

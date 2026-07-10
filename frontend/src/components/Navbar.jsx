@@ -6,7 +6,7 @@ import { RxCross2 } from "react-icons/rx";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { IoChevronDown } from "react-icons/io5";
 import { RiArrowDropDownLine } from "react-icons/ri";
-
+import { setCurrentCity } from "../redux/user.slice";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -16,7 +16,7 @@ import { setUserData } from "../redux/user.slice";
 
 function Navbar() {
   const { userData, current_city } = useSelector((state) => state.user);
-  const { myShopData } = useSelector((state) => state.owner);
+  const { myShopData, pendingOrders } = useSelector((state) => state.owner);
   const { items } = useSelector((state) => state.cart);
 
   const navigate = useNavigate();
@@ -26,6 +26,15 @@ function Navbar() {
   const [showSearch, setShowSearch] = useState(false);
 
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+
+  const [citySearch, setCitySearch] = useState("");
+
+  const [cities, setCities] = useState([]);
+
+  const filteredCities = cities.filter((city) =>
+    city.toLowerCase().includes(citySearch.toLowerCase()),
+  );
+
   const locationRef = useRef(null);
 
   const handleLogOut = async () => {
@@ -41,21 +50,30 @@ function Navbar() {
   };
 
   useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (
-      locationRef.current &&
-      !locationRef.current.contains(e.target)
-    ) {
-      setShowLocationDropdown(false);
-    }
-  };
+    const fetchCities = async () => {
+      try {
+        const res = await axios.get(`${serverUrl}/api/shop/cities`);
 
-  document.addEventListener("mousedown", handleClickOutside);
+        setCities(res.data.cities);
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, []);
+    fetchCities();
+
+    const handleClickOutside = (e) => {
+      if (locationRef.current && !locationRef.current.contains(e.target)) {
+        setShowLocationDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <>
@@ -136,10 +154,9 @@ function Navbar() {
                 "
               >
                 <div className="relative" ref={locationRef}>
-
-  <button
-    onClick={() => setShowLocationDropdown((prev) => !prev)}
-    className="
+                  <button
+                    onClick={() => setShowLocationDropdown((prev) => !prev)}
+                    className="
       w-[180px]
       flex
       items-center
@@ -151,30 +168,27 @@ function Navbar() {
       hover:bg-gray-50
       transition
     "
-  >
-    <div className="flex items-center gap-2">
+                  >
+                    <div className="flex items-center gap-2">
+                      <FaLocationDot className="text-[#E76F51]" />
 
-      <FaLocationDot className="text-[#E76F51]" />
+                      <span className="truncate font-medium text-gray-700">
+                        {current_city}
+                      </span>
+                    </div>
 
-      <span className="truncate font-medium text-gray-700">
-        {current_city}
-      </span>
+                    <span
+                      className={`transition ${
+                        showLocationDropdown ? "rotate-180" : ""
+                      }`}
+                    >
+                      <RiArrowDropDownLine />
+                    </span>
+                  </button>
 
-    </div>
-
-    <span
-      className={`transition ${
-        showLocationDropdown ? "rotate-180" : ""
-      }`}
-    >
-      <RiArrowDropDownLine />
-    </span>
-
-  </button>
-
-  {showLocationDropdown && (
-  <div
-    className="
+                  {showLocationDropdown && (
+                    <div
+                      className="
       absolute
       top-[64px]
       left-0
@@ -191,72 +205,91 @@ function Navbar() {
       zoom-in
       duration-150
     "
-  >
-    {/* GPS */}
+                    >
+                      {/* GPS */}
 
-    <button
-      onClick={() => {
-        // Call your existing location function here
-        // Example:
-        // getCurrentLocation();
+                      <button
+                        onClick={() => {
+                          // We'll connect GPS later
+                          setShowLocationDropdown(false);
+                        }}
+                        className="
+    w-full
+    px-5
+    py-4
+    text-left
+    hover:bg-[#FFF8F2]
+    transition
+  "
+                      >
+                        <div className="flex gap-3">
+                          <FaLocationDot
+                            size={18}
+                            className="text-[#E76F51] mt-1"
+                          />
 
-        setShowLocationDropdown(false);
-      }}
-      className="
-        w-full
-        px-5
-        py-4
-        text-left
-        hover:bg-[#FFF8F2]
-        transition
-      "
-    >
-      <div className="flex gap-3">
+                          <div>
+                            <h3 className="font-semibold text-[#E76F51]">
+                              Detect Current Location
+                            </h3>
 
-        <FaLocationDot
-          size={18}
-          className="text-[#E76F51] mt-1"
-        />
+                            <p className="text-sm text-gray-500">Using GPS</p>
+                          </div>
+                        </div>
+                      </button>
 
-        <div>
+                      <div className="border-t border-gray-100 px-5 py-4">
+                        <input
+                          type="text"
+                          placeholder="Search for another location..."
+                          value={citySearch}
+                          onChange={(e) => setCitySearch(e.target.value)}
+                          className="
+    w-full
+    rounded-xl
+    border
+    border-gray-200
+    px-4
+    py-3
+    outline-none
+    focus:border-[#E76F51]
+    transition
+  "
+                        />
 
-          <h3 className="font-semibold text-[#E76F51]">
-            Detect Current Location
-          </h3>
+                        <div className="mt-3 max-h-56 overflow-y-auto">
+                          {filteredCities.map((city) => (
+                            <button
+                              key={city}
+                              onClick={() => {
+                                dispatch(setCurrentCity(city));
 
-          <p className="text-sm text-gray-500">
-            Using GPS
-          </p>
+                                setCitySearch("");
 
-        </div>
-
-      </div>
-    </button>
-
-    <div className="border-t border-gray-100 px-5 py-4">
-
-      <input
-        type="text"
-        placeholder="Search for another location..."
-        className="
-          w-full
-          rounded-xl
-          border
-          border-gray-200
-          px-4
-          py-3
-          outline-none
-          focus:border-[#E76F51]
-          transition
-        "
-      />
-
-    </div>
-
-  </div>
-)}
-
-</div>
+                                setShowLocationDropdown(false);
+                              }}
+                              className={`
+      w-full
+      text-left
+      px-4
+      py-3
+      rounded-xl
+      transition
+      ${
+        current_city === city
+          ? "bg-[#FFF2EC] text-[#E76F51] font-semibold"
+          : "hover:bg-[#FFF8F2]"
+      }
+    `}
+                            >
+                              {city}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex-1 flex items-center px-5">
                   <input
@@ -297,21 +330,21 @@ function Navbar() {
             {showSearch && userData?.role === "user" && (
               <div
                 className="
-                absolute
-                top-20
-                left-4
-                right-4
-                md:hidden
-                bg-white
-                rounded-2xl
-                shadow-lg
-                border
-                border-gray-200
-                flex
-                items-center
-                px-3
-                py-3
-                "
+      absolute
+      top-20
+      left-4
+      right-4
+      md:hidden
+      bg-white
+      rounded-2xl
+      shadow-lg
+      border
+      border-gray-200
+      flex
+      items-center
+      px-3
+      py-3
+    "
               >
                 <FaLocationDot className="text-[#E76F51]" />
 
@@ -338,18 +371,18 @@ function Navbar() {
                   <button
                     onClick={() => navigate("/add-item")}
                     className="
-        hidden
-        md:flex
-        items-center
-        gap-2
-        bg-[#E76F51]
-        hover:bg-[#d86345]
-        text-white
-        px-4
-        py-2.5
-        rounded-xl
-        transition
-        font-medium
+          hidden
+          md:flex
+          items-center
+          gap-2
+          bg-[#E76F51]
+          hover:bg-[#d86345]
+          text-white
+          px-4
+          py-2.5
+          rounded-xl
+          transition
+          font-medium
         "
                   >
                     <FaPlus size={14} />
@@ -358,36 +391,62 @@ function Navbar() {
 
                   <button
                     className="
-        hidden
-        md:flex
-        items-center
-        gap-2
-        bg-[#fff2ec]
-        text-[#E76F51]
-        px-4
-        py-2.5
-        rounded-xl
-        transition
-        hover:bg-[#ffe7de]
-        font-medium
+          hidden
+          md:flex
+          items-center
+          gap-2
+          bg-[#fff2ec]
+          text-[#E76F51]
+          px-4
+          py-2.5
+          rounded-xl
+          transition
+          hover:bg-[#ffe7de]
+          font-medium
+          relative
         "
+                    onClick={() => navigate("/owner/orders")}
                   >
                     <MdOutlinePendingActions size={18} />
-                    Orders
+
+                    <span>Orders</span>
+
+                    {pendingOrders > 0 && (
+                      <span
+                        className="
+              absolute
+              -top-2
+              -right-2
+              min-w-5
+              h-5
+              rounded-full
+              bg-red-500
+              text-white
+              text-[10px]
+              font-bold
+              flex
+              items-center
+              justify-center
+              px-1
+            "
+                      >
+                        {pendingOrders}
+                      </span>
+                    )}
                   </button>
                 </>
               ) : (
                 <button
                   onClick={() => navigate("/create-edit-shop")}
                   className="
-      bg-[#E76F51]
-      hover:bg-[#d86345]
-      text-white
-      px-5
-      py-2.5
-      rounded-xl
-      transition
-      font-medium
+        bg-[#E76F51]
+        hover:bg-[#d86345]
+        text-white
+        px-5
+        py-2.5
+        rounded-xl
+        transition
+        font-medium
       "
                 >
                   Create Shop
@@ -400,11 +459,11 @@ function Navbar() {
                 <button
                   onClick={() => navigate("/cart")}
                   className="
-      relative
-      p-3
-      rounded-full
-      hover:bg-[#fff2ec]
-      transition
+        relative
+        p-3
+        rounded-full
+        hover:bg-[#fff2ec]
+        transition
       "
                 >
                   <FiShoppingCart size={23} className="text-[#264653]" />
@@ -412,19 +471,19 @@ function Navbar() {
                   {items.length > 0 && (
                     <span
                       className="
-          absolute
-          -top-1
-          -right-1
-          min-w-5
-          h-5
-          rounded-full
-          bg-[#E76F51]
-          text-white
-          text-[10px]
-          flex
-          items-center
-          justify-center
-          font-bold
+            absolute
+            -top-1
+            -right-1
+            min-w-5
+            h-5
+            rounded-full
+            bg-[#E76F51]
+            text-white
+            text-[10px]
+            flex
+            items-center
+            justify-center
+            font-bold
           "
                     >
                       {items.reduce((total, item) => total + item.quantity, 0)}

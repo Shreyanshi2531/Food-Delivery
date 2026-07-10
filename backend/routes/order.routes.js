@@ -5,7 +5,6 @@ import {
   getShopOrders,
   updateOrderStatus,
 } from "../controllers/order.controllers.js";
-
 import isAuth from "../middlewares/isAuth.js";
 
 const router = express.Router();
@@ -17,7 +16,7 @@ router.post("/place-order", isAuth, placeOrder);
 router.get("/my-orders", isAuth, getMyOrders);
 
 // Shop Orders
-router.get("/shop-orders/:shopId", isAuth, getShopOrders);
+router.get("/shop-orders", isAuth, getShopOrders);
 
 // Update Order Status
 router.put("/update-status/:orderId", isAuth, updateOrderStatus);

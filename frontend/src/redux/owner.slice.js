@@ -1,23 +1,34 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice } from "@reduxjs/toolkit";
 
 const ownerSlice = createSlice({
-    name: 'owner',
-    initialState: {
-        myShopData: null,
-        loading: true
-    },
-    reducers: {
-        setMyShopData: (state, action) => {
-            state.myShopData = action.payload;
-            state.loading = false;
-        }
-        },
-        setCity: (state, action) => {
-            state.city = action.payload;
-            state.loading = false;
-        }
-    }
-);
+  name: "owner",
 
-export const { setMyShopData } = ownerSlice.actions;
+  initialState: {
+    myShopData: null,
+    pendingOrders: 0,
+    loading: true,
+},
+
+  reducers: {
+    setMyShopData: (state, action) => {
+      state.myShopData = action.payload;
+      state.loading = false;
+    },
+
+    setPendingOrders: (state, action) => {
+    state.pendingOrders = action.payload;
+},
+
+    setShopOrders: (state, action) => {
+      state.shopOrders = action.payload;
+    },
+  },
+});
+
+export const {
+    setMyShopData,
+    setPendingOrders,
+    setShopOrders,
+} = ownerSlice.actions;
+
 export default ownerSlice.reducer;
