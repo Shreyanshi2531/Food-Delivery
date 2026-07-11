@@ -31,11 +31,23 @@ function Navbar() {
 
   const [cities, setCities] = useState([]);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState({
+    restaurants: [],
+    items: [],
+  });
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const filteredCities = cities.filter((city) =>
     city.toLowerCase().includes(citySearch.toLowerCase()),
   );
 
+  const totalSearchResults =
+    searchResults.restaurants.length + searchResults.items.length;
+
   const locationRef = useRef(null);
+  const searchRef = useRef(null);
 
   const handleLogOut = async () => {
     try {
@@ -66,6 +78,10 @@ function Navbar() {
       if (locationRef.current && !locationRef.current.contains(e.target)) {
         setShowLocationDropdown(false);
       }
+
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSearchResults(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -74,6 +90,64 @@ function Navbar() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(async () => {
+      // If search box is empty
+      if (!searchQuery.trim()) {
+        setSearchResults({
+          restaurants: [],
+          items: [],
+        });
+
+        setShowSearchResults(false);
+        return;
+      }
+
+      try {
+        setSearchLoading(true);
+
+        const res = await axios.get(`${serverUrl}/api/shop/search`, {
+          params: {
+            query: searchQuery,
+          },
+        });
+        console.log("Search Query:", searchQuery);
+        console.log("Response:", res.data);
+
+        setSearchResults({
+          restaurants: res.data.restaurants,
+          items: res.data.items,
+        });
+        console.log("Search Results State:", {
+          restaurants: res.data.restaurants,
+          items: res.data.items,
+        });
+
+        setShowSearchResults(true);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
 
   return (
     <>
@@ -150,7 +224,6 @@ function Navbar() {
                 border-gray-200
                 shadow-md
                 flex
-                overflow-hidden
                 "
               >
                 <div className="relative" ref={locationRef}>
@@ -291,19 +364,194 @@ function Navbar() {
                   )}
                 </div>
 
-                <div className="flex-1 flex items-center px-5">
+                <div
+                  ref={searchRef}
+                  className="relative flex-1 flex items-center px-5"
+                >
                   <input
                     type="text"
                     placeholder="Search restaurants or dishes..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setShowSearchResults(true)}
                     className="
-                    flex-1
-                    outline-none
-                    text-sm
-                    placeholder:text-gray-400
-                    "
+    flex-1
+    outline-none
+    text-sm
+    placeholder:text-gray-400
+  "
                   />
 
                   <IoIosSearch size={22} className="text-gray-400" />
+                  {showSearchResults && (
+                    <div
+  className="
+    absolute
+    top-14
+    left-0
+    right-0
+    bg-white
+    rounded-2xl
+    shadow-2xl
+    border
+    border-gray-200
+    max-h-[280px]
+    overflow-y-auto
+    hide-scrollbar
+    z-50
+  "
+>
+                    
+                      {/* Loading */}
+
+                      {searchLoading && (
+                        <p className="p-5 text-center text-gray-500">
+                          Searching...
+                        </p>
+                      )}
+
+                      {/* No Results */}
+
+                      {!searchLoading &&
+                        searchResults.restaurants.length === 0 &&
+                        searchResults.items.length === 0 && (
+                          <p className="p-5 text-center text-gray-500">
+                            No results found
+                          </p>
+                        )}
+
+                      {/* Restaurants */}
+
+                      {!searchLoading &&
+                        searchResults.restaurants.length > 0 && (
+                          <>
+                            <h3 className="px-5 pt-4 pb-2 text-xs font-bold uppercase text-gray-400">
+                              Restaurants
+                            </h3>
+
+                            {searchResults.restaurants
+                              .slice(0, 4)
+                              .map((restaurant) => (
+                                <button
+                                  key={restaurant._id}
+                                  onClick={() => {
+                                    navigate(`/restaurant/${item.shop._id}`, {
+                                      state: {
+                                        itemId: item._id,
+                                      },
+                                    });
+
+                                    setShowSearchResults(false);
+                                    setSearchQuery("");
+                                  }}
+                                  className="
+                w-full
+                flex
+                items-center
+                gap-4
+                px-5
+                py-3
+                hover:bg-[#FFF8F2]
+                transition
+              "
+                                >
+                                  <img
+                                    src={restaurant.image}
+                                    alt={restaurant.name}
+                                    className="w-12 h-12 rounded-xl object-cover"
+                                  />
+
+                                  <div className="text-left">
+                                    <p className="font-semibold">
+                                      {restaurant.name}
+                                    </p>
+
+                                    <p className="text-sm text-gray-500">
+                                      {restaurant.city}
+                                    </p>
+                                  </div>
+                                </button>
+                              ))}
+                          </>
+                        )}
+
+                      {/* Dishes */}
+
+                      {!searchLoading && searchResults.items.length > 0 && (
+                        <>
+                          <h3 className="px-5 pt-4 pb-2 text-xs font-bold uppercase text-gray-400">
+                            Dishes
+                          </h3>
+
+                          {searchResults.items.slice(0, 4).map((item) => (
+                            <button
+                              key={item._id}
+                              onClick={() => {
+                                navigate(`/restaurant/${item.shop._id}`, {
+                                  state: {
+                                    itemId: item._id,
+                                  },
+                                });
+
+                                setShowSearchResults(false);
+                                setSearchQuery("");
+                              }}
+                              className="
+                w-full
+                flex
+                items-center
+                gap-4
+                px-5
+                py-3
+                hover:bg-[#FFF8F2]
+                transition
+              "
+                            >
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="w-12 h-12 rounded-xl object-cover"
+                              />
+
+                              <div className="flex-1 text-left">
+                                <p className="font-semibold">{item.name}</p>
+
+                                <p className="text-sm text-gray-500">
+                                  {item.shop?.name}
+                                </p>
+                              </div>
+
+                              <span className="font-semibold text-[#E76F51]">
+                                ₹{item.price}
+                              </span>
+                            </button>
+                          ))}
+                        </>
+                      )}
+                      {totalSearchResults > 4 && (
+                        <button
+                          onClick={() => {
+                            // We'll connect this later
+                            setShowSearchResults(false);
+                          }}
+                          className="
+      w-full
+      px-5
+      py-4
+      border-t
+      border-gray-100
+      text-center
+      text-[#E76F51]
+      font-semibold
+      hover:bg-[#FFF8F2]
+      transition
+    "
+                        >
+                          View all {totalSearchResults} results →
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

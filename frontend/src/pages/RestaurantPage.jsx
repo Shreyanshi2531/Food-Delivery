@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import axios from "axios";
 import { ClipLoader } from "react-spinners";
 
@@ -9,13 +9,18 @@ import { serverUrl } from "../App";
 
 function RestaurantPage() {
   const { shopId } = useParams();
+  const location = useLocation();
+  const selectedItemId = location.state?.itemId;
+  console.log("Selected Item ID:", selectedItemId);
 
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("");
+  const [highlightedItem, setHighlightedItem] = useState(null);
 
   const sectionRefs = useRef({});
+  const itemRefs = useRef({});
 
   // Fetch Restaurant
   useEffect(() => {
@@ -33,6 +38,24 @@ function RestaurantPage() {
 
     fetchRestaurant();
   }, [shopId]);
+
+  useEffect(() => {
+  if (!shop || !selectedItemId) return;
+
+  setTimeout(() => {
+    itemRefs.current[selectedItemId]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    setHighlightedItem(selectedItemId);
+
+    setTimeout(() => {
+      setHighlightedItem(null);
+    }, 2000);
+
+  }, 300);
+}, [shop, selectedItemId]);
 
   // Search Items
   const filteredItems = shop
@@ -218,10 +241,26 @@ function RestaurantPage() {
                     ref={(el) => (sectionRefs.current[category] = el)}
                     className="mb-14 scroll-mt-28"
                   >
+              
                     <h2 className="text-3xl font-bold mb-6">{category}</h2>
 
                     {items.map((item) => (
-                      <MenuItem key={item._id} item={item} shopId={shop._id} />
+                      <div
+  key={item._id}
+  ref={(el) => (itemRefs.current[item._id] = el)}
+  className={`
+    rounded-2xl
+    transition-all
+    duration-100
+    ${
+      highlightedItem === item._id
+        ? "bg-[#FFF2EC] ring-1 ring-[#f78c71] shadow-md p-1"
+        : ""
+    }
+  `} 
+>
+                        <MenuItem item={item} shopId={shop._id} />
+                      </div>
                     ))}
                   </section>
                 ))

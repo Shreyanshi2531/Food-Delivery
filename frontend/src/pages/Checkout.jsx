@@ -26,7 +26,10 @@ function Checkout() {
     0,
   );
 
-  const deliveryFee = items.length ? 40 : 0;
+  const FREE_DELIVERY_THRESHOLD = 300;
+
+  const deliveryFee =
+    items.length === 0 ? 0 : subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : 30;
 
   const gst = Math.round(subtotal * 0.05);
 
@@ -374,15 +377,40 @@ function Checkout() {
                   </span>
                 </div>
 
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Delivery Fee</span>
 
-                  <span className="font-medium flex items-center">
-                    <LuIndianRupee />
-
-                    {deliveryFee}
-                  </span>
+                  {deliveryFee === 0 ? (
+                    <span className="font-semibold text-green-600">
+                      FREE
+                    </span>
+                  ) : (
+                    <span className="font-medium flex items-center">
+                      <LuIndianRupee />
+                      {deliveryFee}
+                    </span>
+                  )}
                 </div>
+
+                {deliveryFee === 0 && subtotal >= FREE_DELIVERY_THRESHOLD && (
+                  <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3">
+                    <p className="text-sm font-medium text-green-700">
+                      Congratulations! You've unlocked FREE delivery.
+                    </p>
+                  </div>
+                )}
+
+                {deliveryFee > 0 && (
+                  <div className="rounded-xl bg-orange-50 border border-orange-200 px-4 py-3">
+                    <p className="text-sm font-medium text-[#E76F51]">
+                      Add{" "}
+                      <span className="font-bold">
+                        ₹{FREE_DELIVERY_THRESHOLD - subtotal}
+                      </span>{" "}
+                      more to unlock FREE delivery.
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">GST</span>

@@ -21,11 +21,18 @@ function Cart() {
     0,
   );
 
-  const deliveryFee = items.length > 0 ? 40 : 0;
+  const FREE_DELIVERY_THRESHOLD = 300;
+
+  const deliveryFee =
+    items.length === 0 ? 0 : subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : 40;
 
   const gst = Math.round(subtotal * 0.05);
 
   const total = subtotal + deliveryFee + gst;
+
+  const remainingAmount = Math.max(FREE_DELIVERY_THRESHOLD - subtotal, 0);
+
+  const progress = Math.min((subtotal / FREE_DELIVERY_THRESHOLD) * 100, 100);
 
   return (
     <>
@@ -117,39 +124,106 @@ function Cart() {
               <div className="bg-white rounded-3xl shadow-sm p-6 h-fit sticky top-28">
                 <h2 className="text-2xl font-bold mb-6">Bill Details</h2>
 
+                {/* FREE DELIVERY */}
+
+                <div className="mb-7">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="font-medium text-gray-700">
+                       Free Delivery Progress
+                    </p>
+
+                    <p className="text-sm font-semibold text-[#E76F51]">
+                      ₹{subtotal} / ₹{FREE_DELIVERY_THRESHOLD}
+                    </p>
+                  </div>
+
+                  <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        deliveryFee === 0 ? "bg-green-500" : "bg-[#E76F51]"
+                      }`}
+                      style={{
+                        width: `${progress}%`,
+                      }}
+                    />
+                  </div>
+
+                  {deliveryFee === 0 ? (
+                    <p className="mt-3 text-sm font-medium text-green-600">
+                       Congratulations! You've unlocked FREE delivery.
+                    </p>
+                  ) : (
+                    <p className="mt-3 text-sm font-medium text-[#E76F51]">
+                       Add{" "}
+                      <span className="font-bold">₹{remainingAmount}</span> more
+                      to unlock FREE delivery.
+                    </p>
+                  )}
+                </div>
+
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>₹ {subtotal}</span>
+
+                    <span className="font-medium">₹ {subtotal}</span>
                   </div>
 
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span>Delivery Fee</span>
-                    <span>₹ {deliveryFee}</span>
+
+                    {deliveryFee === 0 ? (
+                      <span className="font-semibold text-green-600">
+                        FREE
+                      </span>
+                    ) : (
+                      <span className="font-medium">₹ {deliveryFee}</span>
+                    )}
                   </div>
 
                   <div className="flex justify-between">
-                    <span>GST</span>
-                    <span>₹ {gst}</span>
+                    <span>GST (5%)</span>
+
+                    <span className="font-medium">₹ {gst}</span>
                   </div>
 
                   <hr />
 
-                  <div className="flex justify-between text-xl font-bold">
+                  <div className="flex justify-between text-2xl font-bold">
                     <span>Total</span>
-                    <span>₹ {total}</span>
+
+                    <span className="text-[#E76F51]">₹ {total}</span>
                   </div>
 
                   <button
                     onClick={() => navigate("/checkout")}
-                    className="w-full mt-5 bg-[#E76F51] text-white py-3 rounded-xl font-semibold hover:scale-[1.02] transition"
+                    className="
+        w-full
+        mt-6
+        bg-[#E76F51]
+        text-white
+        py-3
+        rounded-xl
+        font-semibold
+        hover:scale-[1.02]
+        transition
+      "
                   >
                     Proceed to Checkout
                   </button>
 
                   <button
                     onClick={() => dispatch(clearCart())}
-                    className="w-full mt-3 border border-red-400 text-red-500 py-3 rounded-xl hover:bg-red-50 transition"
+                    className="
+        w-full
+        mt-3
+        border
+        border-red-400
+        text-red-500
+        py-3
+        rounded-xl
+        hover:bg-red-50
+        transition
+      "
                   >
                     Clear Cart
                   </button>
