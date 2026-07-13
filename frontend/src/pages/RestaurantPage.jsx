@@ -18,6 +18,7 @@ function RestaurantPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("");
   const [highlightedItem, setHighlightedItem] = useState(null);
+  const [reviews, setReviews] = useState([]);
 
   const sectionRefs = useRef({});
   const itemRefs = useRef({});
@@ -29,6 +30,11 @@ function RestaurantPage() {
         const res = await axios.get(`${serverUrl}/api/shop/shop/${shopId}`);
 
         setShop(res.data);
+        const reviewRes = await axios.get(
+          `${serverUrl}/api/review/shop/${shopId}`,
+        );
+
+        setReviews(reviewRes.data.reviews);
       } catch (err) {
         console.log(err);
       } finally {
@@ -40,22 +46,21 @@ function RestaurantPage() {
   }, [shopId]);
 
   useEffect(() => {
-  if (!shop || !selectedItemId) return;
-
-  setTimeout(() => {
-    itemRefs.current[selectedItemId]?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-
-    setHighlightedItem(selectedItemId);
+    if (!shop || !selectedItemId) return;
 
     setTimeout(() => {
-      setHighlightedItem(null);
-    }, 2000);
+      itemRefs.current[selectedItemId]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
 
-  }, 300);
-}, [shop, selectedItemId]);
+      setHighlightedItem(selectedItemId);
+
+      setTimeout(() => {
+        setHighlightedItem(null);
+      }, 2000);
+    }, 300);
+  }, [shop, selectedItemId]);
 
   // Search Items
   const filteredItems = shop
@@ -142,7 +147,11 @@ function RestaurantPage() {
               <h1 className="text-4xl font-bold text-[#1D2939]">{shop.name}</h1>
 
               <div className="flex flex-wrap items-center gap-3 mt-3 text-gray-500">
-                <span>⭐ 4.5</span>
+                <span>⭐ {shop.averageRating || "New"}</span>
+
+                <span className="text-gray-500">
+                  ({shop.totalReviews || 0} Reviews)
+                </span>
 
                 <span>•</span>
 
@@ -241,14 +250,13 @@ function RestaurantPage() {
                     ref={(el) => (sectionRefs.current[category] = el)}
                     className="mb-14 scroll-mt-28"
                   >
-              
                     <h2 className="text-3xl font-bold mb-6">{category}</h2>
 
                     {items.map((item) => (
                       <div
-  key={item._id}
-  ref={(el) => (itemRefs.current[item._id] = el)}
-  className={`
+                        key={item._id}
+                        ref={(el) => (itemRefs.current[item._id] = el)}
+                        className={`
     rounded-2xl
     transition-all
     duration-100
@@ -257,8 +265,8 @@ function RestaurantPage() {
         ? "bg-[#FFF2EC] ring-1 ring-[#f78c71] shadow-md p-1"
         : ""
     }
-  `} 
->
+  `}
+                      >
                         <MenuItem item={item} shopId={shop._id} />
                       </div>
                     ))}
@@ -266,6 +274,45 @@ function RestaurantPage() {
                 ))
               )}
             </div>
+          </div>
+
+          {/* Reviews */}
+
+          <div className="mt-20">
+            <h2 className="text-3xl font-bold mb-8">Customer Reviews</h2>
+
+            {reviews.length === 0 ? (
+              <div className="bg-white rounded-3xl p-8 text-center text-gray-500 shadow-sm">
+                No reviews yet.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {reviews.map((review) => (
+                  <div
+                    key={review._id}
+                    className="bg-white rounded-3xl shadow-sm p-6"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          {review.user?.fullName}
+                        </h3>
+
+                        <p className="text-sm text-gray-400">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+
+                      <div className="text-yellow-500 font-bold">
+                        ⭐ {review.rating}/5
+                      </div>
+                    </div>
+
+                    <p className="mt-4 text-gray-600">{review.review}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

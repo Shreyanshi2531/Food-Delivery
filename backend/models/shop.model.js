@@ -1,40 +1,55 @@
-import mongoose from 'mongoose'; 
+import mongoose from "mongoose";
 
-const shopSchema = new mongoose.Schema({
+const shopSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     image: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     city: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     state: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     address: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     phone: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
-    items: [{
+    items: [
+      {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Item',
-    }],
-}, { timestamps: true });
+        ref: "Item",
+      },
+    ],
 
-const Shop = mongoose.model('Shop', shopSchema);
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+
+    totalReviews: {
+      type: Number,
+      default: 0,
+    },
+  },
+  { timestamps: true },
+);
+
+const Shop = mongoose.model("Shop", shopSchema);
 export default Shop;

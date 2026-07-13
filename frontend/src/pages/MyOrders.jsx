@@ -5,12 +5,17 @@ import { serverUrl } from "../App";
 import { LuIndianRupee } from "react-icons/lu";
 import { ClipLoader } from "react-spinners";
 import ConfirmModal from "../components/ConfirmModal";
+import ReviewModal from "../components/ReviewModal";
 
 function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedShop, setSelectedShop] = useState(null);
+  const [reviewedOrders, setReviewedOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   // Cancel Order
   const cancelOrder = async (orderId) => {
@@ -45,7 +50,30 @@ function MyOrders() {
           withCredentials: true,
         });
 
-        setOrders(res.data.orders);
+        const fetchedOrders = res.data.orders;
+
+        setOrders(fetchedOrders);
+
+        const reviewed = [];
+
+        for (const order of fetchedOrders) {
+          try {
+            const result = await axios.get(
+              `${serverUrl}/api/review/my-review/${order._id}`,
+              {
+                withCredentials: true,
+              },
+            );
+
+            if (result.data.reviewed) {
+              reviewed.push(order._id);
+            }
+          } catch (error) {
+            console.log(error);
+          }
+        }
+
+        setReviewedOrders(reviewed);
       } catch (error) {
         console.log(error);
       } finally {
@@ -213,11 +241,48 @@ function MyOrders() {
                             setSelectedOrderId(order._id);
                             setShowCancelModal(true);
                           }}
-                          className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition"
+                          className="..."
                         >
                           Cancel Order
                         </button>
                       )}
+
+                      {order.orderStatus === "Delivered" &&
+                        (reviewedOrders.includes(order._id) ? (
+                          <button
+                            disabled
+                            className="
+        mt-4
+        bg-green-100
+        text-green-700
+        px-4
+        py-2
+        rounded-xl
+        font-medium
+      "
+                          >
+                            ✅ Review Submitted
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setSelectedShop(order.shop);
+                              setSelectedOrder(order);
+                              setShowReviewModal(true);
+                            }}
+                            className="
+        mt-4
+        bg-[#E76F51]
+        hover:bg-[#d85f43]
+        text-white
+        px-4
+        py-2
+        rounded-xl
+      "
+                          >
+                            ⭐ Rate Restaurant
+                          </button>
+                        ))}
                     </div>
                   </div>
                 </div>
@@ -242,6 +307,38 @@ function MyOrders() {
           await cancelOrder(selectedOrderId);
 
           setSelectedOrderId(null);
+        }}
+      />
+      <ReviewModal
+        isOpen={showReviewModal}
+        shopName={selectedShop?.name}
+        onClose={() => {
+          setShowReviewModal(false);
+          setSelectedShop(null);
+        }}
+        onSubmit={async ({ rating, review }) => {
+          try {
+            await axios.post(
+              `${serverUrl}/api/review/add-review`,
+              {
+                orderId: selectedOrder._id,
+                shopId: selectedShop._id,
+                rating,
+                review,
+              },
+              {
+                withCredentials: true,
+              },
+            );
+
+            setReviewedOrders((prev) => [...prev, selectedOrder._id]);
+
+            setShowReviewModal(false);
+            setSelectedShop(null);
+          } catch (error) {
+            console.log(error);
+            alert(error.response?.data?.message || "Failed to submit review.");
+          }
         }}
       />
     </>
