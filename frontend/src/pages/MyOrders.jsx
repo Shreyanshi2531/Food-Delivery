@@ -16,6 +16,8 @@ function MyOrders() {
   const [selectedShop, setSelectedShop] = useState(null);
   const [reviewedOrders, setReviewedOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteOrderId, setDeleteOrderId] = useState(null);
 
   // Cancel Order
   const cancelOrder = async (orderId) => {
@@ -40,6 +42,21 @@ function MyOrders() {
       console.log(error);
 
       alert(error.response?.data?.message || "Failed to cancel order.");
+    }
+  };
+
+  // Delete Order
+  const handleDeleteOrder = async (orderId) => {
+    try {
+      await axios.delete(`${serverUrl}/api/order/delete/${orderId}`, {
+        withCredentials: true,
+      });
+
+      setOrders((prev) => prev.filter((order) => order._id !== orderId));
+    } catch (error) {
+      console.log(error);
+
+      alert(error.response?.data?.message || "Failed to delete order.");
     }
   };
 
@@ -234,6 +251,8 @@ function MyOrders() {
                         {order.totalAmount}
                       </div>
 
+                      {/* Cancel Order */}
+
                       {(order.orderStatus === "Pending" ||
                         order.orderStatus === "Accepted") && (
                         <button
@@ -241,48 +260,96 @@ function MyOrders() {
                             setSelectedOrderId(order._id);
                             setShowCancelModal(true);
                           }}
-                          className="..."
+                          className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition"
                         >
                           Cancel Order
                         </button>
                       )}
 
-                      {order.orderStatus === "Delivered" &&
-                        (reviewedOrders.includes(order._id) ? (
-                          <button
-                            disabled
-                            className="
-        mt-4
-        bg-green-100
-        text-green-700
-        px-4
-        py-2
-        rounded-xl
-        font-medium
-      "
-                          >
-                            ✅ Review Submitted
-                          </button>
-                        ) : (
+                      {/* Delivered Order */}
+
+                      {order.orderStatus === "Delivered" && (
+                        <div className="flex justify-end gap-3 mt-4 flex-wrap">
+                          {reviewedOrders.includes(order._id) ? (
+                            <button
+                              disabled
+                              className="
+          bg-green-100
+          text-green-700
+          px-4
+          py-2
+          rounded-xl
+          font-medium
+        "
+                            >
+                              ✅ Review Submitted
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setSelectedShop(order.shop);
+                                setSelectedOrder(order);
+                                setShowReviewModal(true);
+                              }}
+                              className="
+          bg-[#E76F51]
+          hover:bg-[#d85f43]
+          text-white
+          px-4
+          py-2
+          rounded-xl
+          transition
+        "
+                            >
+                              ⭐ Rate Restaurant
+                            </button>
+                          )}
+
                           <button
                             onClick={() => {
-                              setSelectedShop(order.shop);
-                              setSelectedOrder(order);
-                              setShowReviewModal(true);
+                              setDeleteOrderId(order._id);
+                              setShowDeleteModal(true);
                             }}
                             className="
-        mt-4
-        bg-[#E76F51]
-        hover:bg-[#d85f43]
-        text-white
+        border
+        border-red-300
+        text-red-500
+        hover:bg-red-50
         px-4
         py-2
         rounded-xl
+        transition
       "
                           >
-                            ⭐ Rate Restaurant
+                            🗑 Delete Order
                           </button>
-                        ))}
+                        </div>
+                      )}
+
+                      {/* Cancelled Order */}
+
+                      {order.orderStatus === "Cancelled" && (
+                        <div className="flex justify-end mt-4">
+                          <button
+                            onClick={() => {
+                              setDeleteOrderId(order._id);
+                              setShowDeleteModal(true);
+                            }}
+                            className="
+        border
+        border-red-300
+        text-red-500
+        hover:bg-red-50
+        px-4
+        py-2
+        rounded-xl
+        transition
+      "
+                          >
+                            🗑 Delete Order
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -309,12 +376,33 @@ function MyOrders() {
           setSelectedOrderId(null);
         }}
       />
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        title="Delete Order"
+        message="Are you sure you want to permanently remove this order from your history?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setDeleteOrderId(null);
+        }}
+        onConfirm={async () => {
+          setShowDeleteModal(false);
+
+          await handleDeleteOrder(deleteOrderId);
+
+          setDeleteOrderId(null);
+        }}
+      />
+
       <ReviewModal
         isOpen={showReviewModal}
         shopName={selectedShop?.name}
         onClose={() => {
           setShowReviewModal(false);
           setSelectedShop(null);
+          setSelectedOrder(null);
         }}
         onSubmit={async ({ rating, review }) => {
           try {
@@ -335,6 +423,7 @@ function MyOrders() {
 
             setShowReviewModal(false);
             setSelectedShop(null);
+            setSelectedOrder(null);
           } catch (error) {
             console.log(error);
             alert(error.response?.data?.message || "Failed to submit review.");

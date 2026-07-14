@@ -177,3 +177,51 @@ export const updateOrderStatus = async (req, res) => {
     });
   }
 };
+
+// DELETE ORDER
+export const deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Make sure the order belongs to the logged-in user
+    if (order.user.toString() !== req.userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    // Allow deletion only for completed/cancelled orders
+    if (
+      order.orderStatus !== "Delivered" &&
+      order.orderStatus !== "Cancelled"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Only delivered or cancelled orders can be deleted.",
+      });
+    }
+
+    await Order.findByIdAndDelete(req.params.orderId);
+
+    res.status(200).json({
+      success: true,
+      message: "Order deleted successfully.",
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete order.",
+    });
+  }
+};

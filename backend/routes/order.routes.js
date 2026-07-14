@@ -4,6 +4,7 @@ import {
   getMyOrders,
   getShopOrders,
   updateOrderStatus,
+  deleteOrder,
 } from "../controllers/order.controllers.js";
 import isAuth from "../middlewares/isAuth.js";
 
@@ -20,5 +21,8 @@ router.get("/shop-orders", isAuth, getShopOrders);
 
 // Update Order Status
 router.put("/update-status/:orderId", isAuth, updateOrderStatus);
+
+// Delete Order
+router.delete("/delete/:orderId", isAuth, deleteOrder);
 
 export default router;
