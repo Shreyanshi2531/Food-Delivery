@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import { serverUrl } from "../App";
@@ -6,6 +6,7 @@ import { LuIndianRupee } from "react-icons/lu";
 import { ClipLoader } from "react-spinners";
 import ConfirmModal from "../components/ConfirmModal";
 import ReviewModal from "../components/ReviewModal";
+import { useLocation } from "react-router-dom";
 
 function MyOrders() {
   const [orders, setOrders] = useState([]);
@@ -18,6 +19,9 @@ function MyOrders() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteOrderId, setDeleteOrderId] = useState(null);
+  const location = useLocation();
+  const orderRefs = useRef({});
+  const [highlightedOrder, setHighlightedOrder] = useState(null);
 
   // Cancel Order
   const cancelOrder = async (orderId) => {
@@ -126,6 +130,27 @@ function MyOrders() {
     }
   };
 
+  useEffect(() => {
+    if (!location.state?.orderId || orders.length === 0) return;
+
+    const orderId = location.state.orderId;
+
+    const orderElement = orderRefs.current[orderId];
+
+    if (orderElement) {
+      orderElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      setHighlightedOrder(orderId);
+
+      setTimeout(() => {
+        setHighlightedOrder(null);
+      }, 3000);
+    }
+  }, [orders, location.state]);
+
   if (loading) {
     return (
       <div className="h-screen flex justify-center items-center">
@@ -161,14 +186,18 @@ function MyOrders() {
               {orders.map((order) => (
                 <div
                   key={order._id}
-                  className="
-                  bg-white
-                  rounded-3xl
-                  shadow-sm
-                  border
-                  border-gray-100
-                  p-6
-                  "
+                  ref={(el) => (orderRefs.current[order._id] = el)}
+                  className={`
+    rounded-3xl
+    p-6
+    transition-all
+    duration-500
+    ${
+      highlightedOrder === order._id
+        ? "bg-[#FFF2EC] border-2 border-[#E76F51] shadow-xl"
+        : "bg-white border border-gray-100 shadow-sm"
+    }
+  `}
                 >
                   {/* TOP */}
 

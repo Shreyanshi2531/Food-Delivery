@@ -6,6 +6,7 @@ import { RxCross2 } from "react-icons/rx";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { IoChevronDown } from "react-icons/io5";
 import { RiArrowDropDownLine } from "react-icons/ri";
+import { IoNotificationsOutline } from "react-icons/io5";
 import { setCurrentCity } from "../redux/user.slice";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -24,13 +25,9 @@ function Navbar() {
 
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-
   const [citySearch, setCitySearch] = useState("");
-
   const [cities, setCities] = useState([]);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState({
     restaurants: [],
@@ -38,6 +35,9 @@ function Navbar() {
   });
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef(null);
 
   const filteredCities = cities.filter((city) =>
     city.toLowerCase().includes(citySearch.toLowerCase()),
@@ -81,6 +81,13 @@ function Navbar() {
 
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setShowSearchResults(false);
+      }
+
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(e.target)
+      ) {
+        setShowNotifications(false);
       }
     };
 
@@ -148,6 +155,28 @@ function Navbar() {
 
     return () => clearTimeout(delayDebounce);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (userData?.role !== "user") return;
+
+    const fetchNotifications = async () => {
+      try {
+        const res = await axios.get(`${serverUrl}/api/notification`, {
+          withCredentials: true,
+        });
+
+        setNotifications(res.data.notifications);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchNotifications();
+  }, [userData]);
+
+  const unreadCount = notifications.filter(
+    (notification) => !notification.isRead,
+  ).length;
 
   return (
     <>
@@ -385,7 +414,7 @@ function Navbar() {
                   <IoIosSearch size={22} className="text-gray-400" />
                   {showSearchResults && (
                     <div
-  className="
+                      className="
     absolute
     top-14
     left-0
@@ -400,8 +429,7 @@ function Navbar() {
     hide-scrollbar
     z-50
   "
->
-                    
+                    >
                       {/* Loading */}
 
                       {searchLoading && (
@@ -702,6 +730,178 @@ function Navbar() {
               )
             ) : (
               <>
+                {userData?.role === "user" && (
+                  <div className="relative" ref={notificationRef}>
+                    <button
+                      onClick={() => setShowNotifications((prev) => !prev)}
+                      className="
+        relative
+        p-3
+        rounded-full
+        hover:bg-[#fff2ec]
+        transition
+      "
+                    >
+                      <IoNotificationsOutline
+                        size={24}
+                        className="text-[#264653]"
+                      />
+
+                      {unreadCount > 0 && (
+                        <span
+                          className="
+            absolute
+            -top-1
+            -right-1
+            min-w-5
+            h-5
+            rounded-full
+            bg-red-500
+            text-white
+            text-[10px]
+            font-bold
+            flex
+            items-center
+            justify-center
+            px-1
+          "
+                        >
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
+
+                    {showNotifications && (
+                      <div
+                        className="
+          absolute
+          right-0
+          top-14
+          w-[360px]
+          bg-white
+          rounded-2xl
+          shadow-2xl
+          border
+          border-gray-200
+          overflow-hidden
+          z-50
+        "
+                      >
+                        <div className="flex items-center justify-between px-5 py-4 border-b">
+                          <h2 className="font-semibold text-lg">
+                            Notifications
+                          </h2>
+
+                          {notifications.length > 0 && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await axios.put(
+                                    `${serverUrl}/api/notification/read-all`,
+                                    {},
+                                    {
+                                      withCredentials: true,
+                                    },
+                                  );
+
+                                  setNotifications((prev) =>
+                                    prev.map((notification) => ({
+                                      ...notification,
+                                      isRead: true,
+                                    })),
+                                  );
+                                } catch (error) {
+                                  console.log(error);
+                                }
+                              }}
+                              className="text-sm text-[#E76F51] font-medium"
+                            >
+                              Mark all read
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="max-h-[400px] overflow-y-auto">
+                          {notifications.length === 0 ? (
+                            <div className="py-12 text-center text-gray-500">
+                              No notifications yet.
+                            </div>
+                          ) : (
+                            notifications.map((notification) => (
+                              <button
+                                key={notification._id}
+                                onClick={async () => {
+                                  try {
+                                    if (!notification.isRead) {
+                                      await axios.put(
+                                        `${serverUrl}/api/notification/read/${notification._id}`,
+                                        {},
+                                        {
+                                          withCredentials: true,
+                                        },
+                                      );
+
+                                      setNotifications((prev) =>
+                                        prev.map((item) =>
+                                          item._id === notification._id
+                                            ? {
+                                                ...item,
+                                                isRead: true,
+                                              }
+                                            : item,
+                                        ),
+                                      );
+                                    }
+
+                                    setShowNotifications(false);
+
+                                    navigate("/my-orders", {
+                                      state: {
+                                        orderId: notification.order,
+                                      },
+                                    });
+                                  } catch (error) {
+                                    console.log(error);
+                                  }
+                                }}
+                                className={`
+                  w-full
+                  text-left
+                  px-5
+                  py-4
+                  border-b
+                  hover:bg-gray-50
+                  transition
+                  ${notification.isRead ? "bg-white" : "bg-[#FFF8F2]"}
+                `}
+                              >
+                                <div className="flex justify-between items-start">
+                                  <h3 className="font-semibold text-[#264653]">
+                                    {notification.title}
+                                  </h3>
+
+                                  {!notification.isRead && (
+                                    <span className="w-2 h-2 rounded-full bg-[#E76F51]" />
+                                  )}
+                                </div>
+
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {notification.message}
+                                </p>
+
+                                <p className="text-xs text-gray-400 mt-2">
+                                  {new Date(
+                                    notification.createdAt,
+                                  ).toLocaleString()}
+                                </p>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {/* CART */}
 
                 <button

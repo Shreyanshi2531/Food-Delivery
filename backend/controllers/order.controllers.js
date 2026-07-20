@@ -1,5 +1,6 @@
 import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
+import Notification from "../models/notification.model.js";
 
 // PLACE ORDER
 export const placeOrder = async (req, res) => {
@@ -154,14 +155,58 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     const updatedOrder = await Order.findByIdAndUpdate(
-      req.params.orderId,
-      {
-        orderStatus: status,
-      },
-      {
-        new: true,
-      },
-    );
+  req.params.orderId,
+  {
+    orderStatus: status,
+  },
+  {
+    new: true,
+  },
+).populate("shop", "name");
+
+let title = "";
+let message = "";
+let type = "General";
+
+switch (status) {
+  case "Accepted":
+    title = "Order Accepted";
+    message = `${updatedOrder.shop.name} has accepted your order.`;
+    type = "Accepted";
+    break;
+
+  case "Preparing":
+    title = "Preparing Your Order";
+    message = `${updatedOrder.shop.name} has started preparing your order.`;
+    type = "Preparing";
+    break;
+
+  case "Out for Delivery":
+    title = "Out for Delivery";
+    message = "Your order is on the way!";
+    type = "Out for Delivery";
+    break;
+
+  case "Delivered":
+    title = "Order Delivered";
+    message = "Your order has been delivered. Enjoy your meal!";
+    type = "Delivered";
+    break;
+
+  case "Cancelled":
+    title = "Order Cancelled";
+    message = "Your order has been cancelled.";
+    type = "Cancelled";
+    break;
+}
+
+await Notification.create({
+  user: updatedOrder.user,
+  order: updatedOrder._id,
+  title,
+  message,
+  type,
+});
 
     res.status(200).json({
       success: true,

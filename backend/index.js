@@ -10,6 +10,7 @@ import shopRouter from './routes/shop.routes.js'
 import itemRouter from './routes/item.routes.js'
 import orderRoutes from "./routes/order.routes.js";
 import reviewRouter from "./routes/review.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -26,6 +27,7 @@ app.use("/api/shop", shopRouter)
 app.use("/api/item", itemRouter)
 app.use("/api/order", orderRoutes);
 app.use("/api/review", reviewRouter);
+app.use("/api/notification", notificationRoutes);
 
 app.listen(PORT, () => {
     connectDB()
