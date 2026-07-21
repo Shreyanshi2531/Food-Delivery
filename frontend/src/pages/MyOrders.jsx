@@ -7,6 +7,7 @@ import { ClipLoader } from "react-spinners";
 import ConfirmModal from "../components/ConfirmModal";
 import ReviewModal from "../components/ReviewModal";
 import { useLocation } from "react-router-dom";
+import socket from "../socket";
 
 function MyOrders() {
   const [orders, setOrders] = useState([]);
@@ -104,6 +105,24 @@ function MyOrders() {
 
     fetchOrders();
   }, []);
+
+  useEffect(() => {
+  socket.on("order-updated", (updatedOrder) => {
+    console.log("SOCKET EVENT RECEIVED", updatedOrder);
+
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order._id === updatedOrder._id
+          ? { ...order, orderStatus: updatedOrder.orderStatus }
+          : order
+      )
+    );
+  });
+
+  return () => {
+    socket.off("order-updated");
+  };
+}, []);
 
   const getStatusColor = (status) => {
     switch (status) {

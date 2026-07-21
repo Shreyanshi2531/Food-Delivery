@@ -2,6 +2,8 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ClipLoader } from "react-spinners";
+import socket from "./socket";
+import { useEffect } from "react";
 
 import "./index.css";
 
@@ -38,9 +40,32 @@ function App() {
   // CUSTOM HOOKS
   useGetCurrentUser();
   useGetCity();
-  useGetShop(); // Owner's own shop
-  useGetShopOrders(); // Owner's shop orders
-  useGetShops(); // All nearby shops for users
+  useGetShop();
+  useGetShopOrders();
+  useGetShops();
+
+ useEffect(() => {
+  socket.on("connect", () => {
+    console.log(" Connected:", socket.id);
+  });
+
+  socket.on("disconnect", () => {
+    console.log(" Disconnected");
+  });
+
+  return () => {
+    socket.off("connect");
+    socket.off("disconnect");
+  };
+}, []);
+
+useEffect(() => {
+  if (!userData?._id) return;
+
+  console.log("🏠 Joining room:", userData._id);
+
+  socket.emit("join-room", userData._id);
+}, [userData]);
 
   if (loading) {
     return (

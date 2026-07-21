@@ -20,7 +20,7 @@ function OwnerOrders() {
       });
 
       setOrders(result.data.orders);
-      const pendingCount = res.data.orders.filter(
+      const pendingCount = result.data.orders.filter(
         (order) => order.orderStatus === "Pending",
       ).length;
 

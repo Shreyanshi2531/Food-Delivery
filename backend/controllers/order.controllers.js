@@ -1,6 +1,7 @@
 import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
 import Notification from "../models/notification.model.js";
+import { getIO } from "../socket.js";
 
 // PLACE ORDER
 export const placeOrder = async (req, res) => {
@@ -155,57 +156,71 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     const updatedOrder = await Order.findByIdAndUpdate(
-  req.params.orderId,
-  {
-    orderStatus: status,
-  },
-  {
-    new: true,
-  },
-).populate("shop", "name");
+      req.params.orderId,
+      {
+        orderStatus: status,
+      },
+      {
+        new: true,
+      },
+    ).populate("shop", "name");
 
-let title = "";
-let message = "";
-let type = "General";
+    let title = "";
+    let message = "";
+    let type = "General";
 
-switch (status) {
-  case "Accepted":
-    title = "Order Accepted";
-    message = `${updatedOrder.shop.name} has accepted your order.`;
-    type = "Accepted";
-    break;
+    switch (status) {
+      case "Accepted":
+        title = "Order Accepted";
+        message = `${updatedOrder.shop.name} has accepted your order.`;
+        type = "Accepted";
+        break;
 
-  case "Preparing":
-    title = "Preparing Your Order";
-    message = `${updatedOrder.shop.name} has started preparing your order.`;
-    type = "Preparing";
-    break;
+      case "Preparing":
+        title = "Preparing Your Order";
+        message = `${updatedOrder.shop.name} has started preparing your order.`;
+        type = "Preparing";
+        break;
 
-  case "Out for Delivery":
-    title = "Out for Delivery";
-    message = "Your order is on the way!";
-    type = "Out for Delivery";
-    break;
+      case "Out for Delivery":
+        title = "Out for Delivery";
+        message = "Your order is on the way!";
+        type = "Out for Delivery";
+        break;
 
-  case "Delivered":
-    title = "Order Delivered";
-    message = "Your order has been delivered. Enjoy your meal!";
-    type = "Delivered";
-    break;
+      case "Delivered":
+        title = "Order Delivered";
+        message = "Your order has been delivered. Enjoy your meal!";
+        type = "Delivered";
+        break;
 
-  case "Cancelled":
-    title = "Order Cancelled";
-    message = "Your order has been cancelled.";
-    type = "Cancelled";
-    break;
-}
+      case "Cancelled":
+        title = "Order Cancelled";
+        message = "Your order has been cancelled.";
+        type = "Cancelled";
+        break;
+    }
 
-await Notification.create({
+    const notification = await Notification.create({
   user: updatedOrder.user,
   order: updatedOrder._id,
   title,
   message,
   type,
+});
+
+const roomId = updatedOrder.user.toString();
+
+console.log("📤 Sending socket event to room:", roomId);
+
+getIO().to(roomId).emit("order-updated", updatedOrder);
+
+getIO().to(roomId).emit("new-notification", notification);
+
+res.status(200).json({
+  success: true,
+  message: "Order status updated successfully",
+  order: updatedOrder,
 });
 
     res.status(200).json({
@@ -250,8 +265,7 @@ export const deleteOrder = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message:
-          "Only delivered or cancelled orders can be deleted.",
+        message: "Only delivered or cancelled orders can be deleted.",
       });
     }
 

@@ -11,6 +11,8 @@ import { setCurrentCity } from "../redux/user.slice";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import socket from "../socket";
+import toast from "react-hot-toast";
 
 import { serverUrl } from "../App";
 import { setUserData } from "../redux/user.slice";
@@ -173,6 +175,30 @@ function Navbar() {
 
     fetchNotifications();
   }, [userData]);
+
+  useEffect(() => {
+  if (userData?.role !== "user") return;
+
+  socket.on("new-notification", (notification) => {
+    console.log(" New Notification:", notification);
+
+    toast.success(notification.title);
+
+    setNotifications((prev) => {
+      const alreadyExists = prev.some(
+        (item) => item._id === notification._id
+      );
+
+      if (alreadyExists) return prev;
+
+      return [notification, ...prev];
+    });
+  });
+
+  return () => {
+    socket.off("new-notification");
+  };
+}, [userData]);
 
   const unreadCount = notifications.filter(
     (notification) => !notification.isRead,
