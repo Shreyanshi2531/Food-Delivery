@@ -1,40 +1,60 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+  {
     fullName: {
-        type: String,
-        required: [true, "Full name is required"]
+      type: String,
+      required: [true, "Full name is required"],
     },
     email: {
-        type: String,
-        required: [true, "Email is required"],
-        unique: true
+      type: String,
+      required: [true, "Email is required"],
+      unique: true,
     },
     password: {
-        type: String,
+      type: String,
     },
     mobile: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     role: {
-        type: String,
-        enum: ["user", "owner", "deliveryBoy"],
-        default: "user",
-        required: true
+      type: String,
+      enum: ["user", "owner", "deliveryBoy"],
+      default: "user",
+      required: true,
     },
     resetOtp: {
-        type: String,
+      type: String,
     },
     isOtpVerified: {
-        type: Boolean,
-        default: false
+      type: Boolean,
+      default: false,
     },
     otpExpires: {
-        type: Date,
-    }
-    
-},{timestamps:true})
+      type: Date,
+    },
+    phone: {
+      type: String,
+    },
+    vehicleType: {
+      type: String,
+      enum: ["Bike", "Scooter", "Cycle"],
+    },
+    vehicleNumber: {
+      type: String,
+    },
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+    currentLocation: {
+      lat: Number,
+      lng: Number,
+    },
+  },
+  { timestamps: true },
+);
 
-const User = mongoose.model("User",userSchema);
-export default User
+const User = mongoose.model("User", userSchema);
+export default User;

@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import UserDashboard from "../components/UserDashboard";
-import DeliveryBoyDashboard from "../components/DeliveryBoyDashboard";
+import DeliveryBoyDashboard from "../components/DeliveryDashboard";
 import OwnerDashboard from "../components/OwnerDashboard";
 import Navbar from "../components/Navbar";
 

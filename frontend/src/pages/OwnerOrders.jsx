@@ -4,6 +4,8 @@ import axios from "axios";
 import { serverUrl } from "../App";
 import { useDispatch } from "react-redux";
 import { setPendingOrders } from "../redux/owner.slice";
+import socket from "../socket";
+import toast from "react-hot-toast";
 
 function OwnerOrders() {
   const [orders, setOrders] = useState([]);
@@ -49,6 +51,30 @@ function OwnerOrders() {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+  socket.on("new-order", (newOrder) => {
+    console.log("🆕 New Order:", newOrder);
+
+    setOrders((prev) => {
+      const updatedOrders = [newOrder, ...prev];
+
+      const pendingCount = updatedOrders.filter(
+        (order) => order.orderStatus === "Pending"
+      ).length;
+
+      dispatch(setPendingOrders(pendingCount));
+
+      return updatedOrders;
+    });
+
+    toast.success(" New Order Received!");
+  });
+
+  return () => {
+    socket.off("new-order");
+  };
+}, [dispatch]);
 
   return (
     <div>

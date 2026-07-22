@@ -24,6 +24,8 @@ import OwnerOrders from "./pages/OwnerOrders";
 // COMPONENTS
 import Navbar from "./components/Navbar.jsx";
 import OwnerDashboard from "./components/OwnerDashboard.jsx";
+import UserDashboard from "./components/UserDashboard.jsx";
+import DeliveryDashboard from "./components/DeliveryDashboard.jsx";
 
 // HOOKS
 import useGetCurrentUser from "./hooks/useGetCurrentUser.jsx";
@@ -169,7 +171,7 @@ useEffect(() => {
         path="/delivery/dashboard"
         element={
           userData?.role === "deliveryBoy" ? (
-            <div>Delivery Dashboard</div>
+            <DeliveryDashboard />
           ) : (
             <Navigate to="/signin" />
           )

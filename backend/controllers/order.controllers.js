@@ -37,6 +37,12 @@ export const placeOrder = async (req, res) => {
       paymentMethod,
     });
 
+    const shopData = await Shop.findById(shop);
+
+const ownerRoom = shopData.owner.toString();
+
+getIO().to(ownerRoom).emit("new-order", order);
+
     res.status(201).json({
       success: true,
       message: "Order placed successfully",
@@ -216,12 +222,6 @@ console.log("📤 Sending socket event to room:", roomId);
 getIO().to(roomId).emit("order-updated", updatedOrder);
 
 getIO().to(roomId).emit("new-notification", notification);
-
-res.status(200).json({
-  success: true,
-  message: "Order status updated successfully",
-  order: updatedOrder,
-});
 
     res.status(200).json({
       success: true,
