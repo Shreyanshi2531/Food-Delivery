@@ -9,10 +9,13 @@ import toast from "react-hot-toast";
 
 function OwnerOrders() {
   const [orders, setOrders] = useState([]);
+  const [deliveryPartners, setDeliveryPartners] = useState([]);
+  const [selectedPartner, setSelectedPartner] = useState({});
   const dispatch = useDispatch();
 
   useEffect(() => {
     fetchOrders();
+    fetchDeliveryPartners();
   }, []);
 
   const fetchOrders = async () => {
@@ -31,6 +34,52 @@ function OwnerOrders() {
       console.log(result.data.orders);
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const fetchDeliveryPartners = async () => {
+    try {
+      const res = await axios.get(
+        `${serverUrl}/api/delivery/available-partners`,
+        {
+          withCredentials: true,
+        },
+      );
+
+      setDeliveryPartners(res.data.partners);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const assignDeliveryPartner = async (orderId) => {
+    try {
+      if (!selectedPartner[orderId]) {
+        return toast.error("Please select a delivery partner.");
+      }
+
+      await axios.put(
+        `${serverUrl}/api/delivery/assign`,
+        {
+          orderId,
+          deliveryPartnerId: selectedPartner[orderId],
+        },
+        {
+          withCredentials: true,
+        },
+      );
+
+      toast.success("Delivery Partner Assigned!");
+
+      fetchOrders();
+    } catch (error) {
+      console.log(error);
+      console.log(error.response);
+      console.log(error.response?.data);
+
+      toast.error(
+        error.response?.data?.message || "Failed to assign delivery partner.",
+      );
     }
   };
 
@@ -53,28 +102,28 @@ function OwnerOrders() {
   };
 
   useEffect(() => {
-  socket.on("new-order", (newOrder) => {
-    console.log("🆕 New Order:", newOrder);
+    socket.on("new-order", (newOrder) => {
+      console.log("🆕 New Order:", newOrder);
 
-    setOrders((prev) => {
-      const updatedOrders = [newOrder, ...prev];
+      setOrders((prev) => {
+        const updatedOrders = [newOrder, ...prev];
 
-      const pendingCount = updatedOrders.filter(
-        (order) => order.orderStatus === "Pending"
-      ).length;
+        const pendingCount = updatedOrders.filter(
+          (order) => order.orderStatus === "Pending",
+        ).length;
 
-      dispatch(setPendingOrders(pendingCount));
+        dispatch(setPendingOrders(pendingCount));
 
-      return updatedOrders;
+        return updatedOrders;
+      });
+
+      toast.success(" New Order Received!");
     });
 
-    toast.success(" New Order Received!");
-  });
-
-  return () => {
-    socket.off("new-order");
-  };
-}, [dispatch]);
+    return () => {
+      socket.off("new-order");
+    };
+  }, [dispatch]);
 
   return (
     <div>
@@ -166,14 +215,33 @@ function OwnerOrders() {
                   )}
 
                   {order.orderStatus === "Preparing" && (
-                    <button
-                      onClick={() =>
-                        updateStatus(order._id, "Out for Delivery")
-                      }
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-                    >
-                      Out for Delivery
-                    </button>
+                    <div className="space-y-3">
+                      <select
+                        value={selectedPartner[order._id] || ""}
+                        onChange={(e) =>
+                          setSelectedPartner({
+                            ...selectedPartner,
+                            [order._id]: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded-lg px-4 py-2"
+                      >
+                        <option value="">Select Delivery Partner</option>
+
+                        {deliveryPartners.map((partner) => (
+                          <option key={partner._id} value={partner._id}>
+                            {partner.fullName} ({partner.vehicleType})
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        onClick={() => assignDeliveryPartner(order._id)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                      >
+                        Assign Delivery Partner
+                      </button>
+                    </div>
                   )}
 
                   {order.orderStatus === "Out for Delivery" && (

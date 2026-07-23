@@ -22,6 +22,8 @@ function SignUp() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("user");
+  const [vehicleType, setVehicleType] = useState("");
+  const [vehicleNumber, setVehicleNumber] = useState("");
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -32,21 +34,40 @@ function SignUp() {
   const dispatch = useDispatch();
 
   const handleSignUp = async () => {
-  setLoading(true);
-  try {
-    const res = await axios.post(
-      `${serverUrl}/api/auth/signup`,
-      { fullName, email, mobile, password, role },
-      { withCredentials: true }
-    );  
-    alert("Account Created Successfully!");
-    dispatch(setUserData(res.data)); 
-  } catch (error) {
-    setError(error?.response?.data?.message || "Sign Up Failed!");
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+
+    if (role === "deliveryBoy" && (!vehicleType || !vehicleNumber)) {
+      setError("Please fill in all vehicle details.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${serverUrl}/api/auth/signup`,
+        {
+          fullName,
+          email,
+          mobile,
+          password,
+          role,
+          vehicleType,
+          vehicleNumber,
+        },
+        {
+          withCredentials: true,
+        },
+      );
+
+      alert("Account Created Successfully!");
+
+      dispatch(setUserData(res.data));
+    } catch (error) {
+      setError(error?.response?.data?.message || "Sign Up Failed!");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleSignUp = async () => {
     if (!mobile || !role) {
@@ -55,8 +76,16 @@ function SignUp() {
       );
       return;
     }
+
+    if (role === "deliveryBoy" && (!vehicleType || !vehicleNumber)) {
+      setError("Please enter vehicle details.");
+      return;
+    }
+
     const provider = new GoogleAuthProvider();
+
     const result = await signInWithPopup(auth, provider);
+
     try {
       const { data } = await axios.post(
         `${serverUrl}/api/auth/google-auth`,
@@ -65,10 +94,16 @@ function SignUp() {
           email: result.user.email,
           mobile,
           role,
+          vehicleType,
+          vehicleNumber,
         },
-        { withCredentials: true },
+        {
+          withCredentials: true,
+        },
       );
+
       alert("Account Created Successfully!");
+
       dispatch(setUserData(data));
 
       if (data.role === "owner") {
@@ -80,8 +115,10 @@ function SignUp() {
       }
     } catch (error) {
       console.error(error);
+
       alert("Google Sign Up Failed!");
-      console.log(error.response.data);
+
+      console.log(error.response?.data);
     }
   };
 
@@ -189,22 +226,69 @@ function SignUp() {
             Role
           </label>
           <div className="flex gap-2">
-            {["user", "owner", "deliveryBoy"].map((r) => (
+            {[
+              { value: "user", label: "Customer" },
+              { value: "owner", label: "Restaurant Owner" },
+              { value: "deliveryBoy", label: "Delivery Partner" },
+            ].map((r) => (
               <button
-                key={r}
+                key={r.value}
                 className="cursor-pointer flex-1 text-center font-medium w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 ease-in-out"
-                onClick={() => setRole(r)}
+                onClick={() => setRole(r.value)}
                 style={
-                  role === r
+                  role === r.value
                     ? { backgroundColor: primaryColor, color: "white" }
                     : { border: `1px solid ${boxBorderColor}` }
                 }
               >
-                {r}
+                {r.label}
               </button>
             ))}
           </div>
         </div>
+
+        {role === "deliveryBoy" && (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 font-medium mb-2">
+                Vehicle Type
+              </label>
+
+              <select
+                value={vehicleType}
+                onChange={(e) => setVehicleType(e.target.value)}
+                className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 ease-in-out"
+                style={{
+                  border: `1px solid ${borderColor}`,
+                  "--tw-ring-color": boxBorderColor,
+                }}
+              >
+                <option value="">Select Vehicle</option>
+                <option value="Bike">Bike</option>
+                <option value="Scooter">Scooter</option>
+                <option value="Cycle">Cycle</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 font-medium mb-2">
+                Vehicle Number
+              </label>
+
+              <input
+                type="text"
+                placeholder="Enter Vehicle Number"
+                value={vehicleNumber}
+                onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
+                className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 ease-in-out"
+                style={{
+                  border: `1px solid ${borderColor}`,
+                  "--tw-ring-color": boxBorderColor,
+                }}
+              />
+            </div>
+          </>
+        )}
 
         <button
           className="w-full mt-2 px-4 py-3 rounded-xl text-white font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#E64323]"
@@ -215,13 +299,15 @@ function SignUp() {
           {loading ? <ClipLoader size={20} /> : "Sign Up"}
         </button>
 
-        <button
-          className="w-full mt-2 px-4 py-2 flex items-center justify-center gap-2 rounded-lg border border-gray-400 font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-gray-200"
-          onClick={handleGoogleSignUp}
-        >
-          <FcGoogle size={20} />
-          <span>Sign Up with Google</span>
-        </button>
+        {role !== "deliveryBoy" && (
+          <button
+            className="w-full mt-2 px-4 py-2 flex items-center justify-center gap-2 rounded-lg border border-gray-400 font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-gray-200"
+            onClick={handleGoogleSignUp}
+          >
+            <FcGoogle size={20} />
+            <span>Sign Up with Google</span>
+          </button>
+        )}
 
         <p className="text-red-600 font-semibold text-center my-2">{error}</p>
 

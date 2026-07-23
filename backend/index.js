@@ -10,6 +10,7 @@ import shopRouter from './routes/shop.routes.js'
 import itemRouter from './routes/item.routes.js'
 import orderRoutes from "./routes/order.routes.js";
 import reviewRouter from "./routes/review.routes.js";
+import deliveryRoutes from "./routes/delivery.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -50,6 +51,7 @@ app.use("/api/item", itemRouter)
 app.use("/api/order", orderRoutes);
 app.use("/api/review", reviewRouter);
 app.use("/api/notification", notificationRoutes);
+app.use("/api/delivery", deliveryRoutes);
 
 httpServer.listen(PORT, () => {
   connectDB();

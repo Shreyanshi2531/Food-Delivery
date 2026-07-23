@@ -100,12 +100,40 @@ const orderSchema = new mongoose.Schema(
         "Pending",
         "Accepted",
         "Preparing",
+        "Assigned",
+        "Picked Up",
         "Out for Delivery",
         "Delivered",
         "Cancelled",
       ],
       default: "Pending",
     },
+
+    deliveryStatus: {
+    type: String,
+    enum: [
+        "Not Assigned",
+        "Assigned",
+        "Rejected",
+        "Accepted",
+        "Picked Up",
+        "Out for Delivery",
+        "Delivered"
+    ],
+    default: "Not Assigned",
+},
+
+    deliveryPartner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    deletedByDeliveryPartner: {
+    type: Boolean,
+    default: false,
+},
+
   },
   {
     timestamps: true,
